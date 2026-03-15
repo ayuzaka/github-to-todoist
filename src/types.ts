@@ -1,50 +1,50 @@
 export type Mapping = {
-  github_issue_id: string;
-  github_issue_number: number;
-  github_repo: string;
-  todoist_task_id: string;
-  last_synced_at: string | null;
+  readonly github_issue_id: string;
+  readonly github_issue_number: number;
+  readonly github_repo: string;
+  readonly todoist_task_id: string;
+  readonly last_synced_at: string | null;
 };
 
 export type MappingCache = {
-  mappings: Mapping[];
+  readonly mappings: readonly Mapping[];
 };
 
 export type SyncResult = {
-  created: number;
-  updated: number;
-  deleted: number;
-  skipped: number;
-  errors: string[];
+  readonly created: number;
+  readonly updated: number;
+  readonly deleted: number;
+  readonly skipped: number;
+  readonly errors: readonly string[];
 };
 
 export type GitHubIssue = {
-  id: string;
-  number: number;
-  title: string;
-  state: "OPEN" | "CLOSED";
-  updatedAt: string;
-  createdAt: string;
-  repository: string;
-  projectItemId: string | null;
-  dueDate: string | null;
+  readonly id: string;
+  readonly number: number;
+  readonly title: string;
+  readonly state: "OPEN" | "CLOSED";
+  readonly updatedAt: string;
+  readonly createdAt: string;
+  readonly repository: string;
+  readonly projectItemId: string | null;
+  readonly dueDate: string | null;
 };
 
 export type TodoistTask = {
-  id: string;
-  content: string;
-  description: string;
-  isCompleted: boolean;
-  updatedAt: string;
-  dueDate: string | null;
-  labels: string[];
+  readonly id: string;
+  readonly content: string;
+  readonly description: string;
+  readonly isCompleted: boolean;
+  readonly updatedAt: string;
+  readonly dueDate: string | null;
+  readonly labels: readonly string[];
 };
 
 export type SyncDirection = "github-to-todoist" | "todoist-to-github" | "skip";
 
 export type SyncEntry = {
-  mapping: Mapping;
-  issue: GitHubIssue;
-  task: TodoistTask;
-  direction: SyncDirection;
+  readonly mapping: Mapping;
+  readonly issue: GitHubIssue;
+  readonly task: TodoistTask;
+  readonly direction: SyncDirection;
 };

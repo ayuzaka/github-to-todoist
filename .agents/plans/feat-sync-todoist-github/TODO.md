@@ -16,7 +16,7 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
 
 ## Section 2: マッピングキャッシュ管理
 
-- [ ] `src/mapping.ts` を実装する
+- [x] `src/mapping.ts` を実装する
   - `getMappingFilePath(): string` — 環境変数 `MAPPING_FILE_PATH` or `~/.local/share/github-to-todoist/mapping.json`
   - `loadMappingCache(): Promise<MappingCache>` — ファイル読み込み。存在しなければ空キャッシュを返す
   - `saveMappingCache(cache: MappingCache): Promise<void>` — ファイル保存（ディレクトリ自動作成）
@@ -24,7 +24,7 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
   - `findMappingByTaskId(cache: MappingCache, taskId: string): Mapping | undefined`
   - `upsertMapping(cache: MappingCache, mapping: Mapping): MappingCache`
   - `removeMapping(cache: MappingCache, issueId: string): MappingCache`
-- [ ] `src/mapping.test.ts` を TDD で実装する
+- [x] `src/mapping.test.ts` を TDD で実装する
 
 ## Section 3: GitHub クライアント（抽象層）
 
