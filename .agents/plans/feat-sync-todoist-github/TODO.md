@@ -56,7 +56,7 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
 
 ## Section 5: 同期ロジック（取得・比較フェーズ）
 
-- [ ] `src/sync-planner.ts` を実装する
+- [x] `src/sync-planner.ts` を実装する
   - `extractIssueUrlFromDescription(description: string): string | null` — description から GitHub Issue URL を抽出
   - `buildIssueUrlComment(issueUrl: string): string` — `<!-- github-to-todoist: URL -->` 形式を生成
   - `determineSyncDirection(mapping: Mapping, issue: GitHubIssue, task: TodoistTask): SyncDirection` — LWW ロジック
@@ -67,7 +67,7 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
     - どちらも未更新 → "skip"
   - `planSync(issues: GitHubIssue[], tasks: TodoistTask[], cache: MappingCache): SyncPlan` — エントリ一覧と新規作成・削除・完了候補を返す
     - `SyncPlan` 型: { toCreate: GitHubIssue[], toUpdate: SyncEntry[], toDelete: Mapping[], toComplete: Mapping[], toSkip: number }
-- [ ] `src/sync-planner.test.ts` を TDD で実装する
+- [x] `src/sync-planner.test.ts` を TDD で実装する
 
 ## Section 6: 同期ロジック（書き込みフェーズ）
 

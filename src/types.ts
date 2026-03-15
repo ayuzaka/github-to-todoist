@@ -48,3 +48,11 @@ export type SyncEntry = {
   readonly task: TodoistTask;
   readonly direction: SyncDirection;
 };
+
+export type SyncPlan = {
+  readonly toCreate: readonly GitHubIssue[];
+  readonly toUpdate: readonly SyncEntry[];
+  readonly toDelete: readonly Mapping[];
+  readonly toComplete: readonly Mapping[];
+  readonly toSkip: number;
+};
