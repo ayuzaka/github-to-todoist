@@ -1,7 +1,7 @@
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import type { TodoistTask } from "./types.js";
 
-type SdkTask = {
+type TodoistApiTask = {
   readonly id: string;
   readonly content: string;
   readonly description: string;
@@ -42,7 +42,7 @@ export type TodoistClient = {
   readonly addLabelToTask: (taskId: string, labelName: string) => Promise<void>;
 };
 
-export const mapTodoistTask = (task: SdkTask): TodoistTask => {
+export const mapTodoistTask = (task: TodoistApiTask): TodoistTask => {
   return {
     id: task.id,
     content: task.content,

@@ -3,9 +3,9 @@ import { createTodoistClient, mapTodoistTask } from "./todoist.js";
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import type { TodoistTask } from "./types.js";
 
-type SdkTask = Parameters<typeof mapTodoistTask>[0];
+type TodoistApiTask = Parameters<typeof mapTodoistTask>[0];
 
-const baseSdkTask: SdkTask = {
+const baseSdkTask: TodoistApiTask = {
   id: "task_1",
   content: "Test Task",
   description: "<!-- github-to-todoist: https://github.com/owner/repo/issues/1 -->",
@@ -67,7 +67,7 @@ describe(mapTodoistTask, () => {
 
   test("due.date がある場合 dueDate に設定する", () => {
     // Arrange
-    const task: SdkTask = {
+    const task: TodoistApiTask = {
       ...baseSdkTask,
       due: {
         isRecurring: false,
@@ -85,7 +85,7 @@ describe(mapTodoistTask, () => {
 
   test("checked が true の場合 isCompleted は true", () => {
     // Arrange
-    const task: SdkTask = { ...baseSdkTask, checked: true };
+    const task: TodoistApiTask = { ...baseSdkTask, checked: true };
 
     // Act
     const result = mapTodoistTask(task);
@@ -96,7 +96,7 @@ describe(mapTodoistTask, () => {
 
   test("updatedAt が null の場合 addedAt をフォールバックとして使用する", () => {
     // Arrange
-    const task: SdkTask = { ...baseSdkTask, updatedAt: null };
+    const task: TodoistApiTask = { ...baseSdkTask, updatedAt: null };
 
     // Act
     const result = mapTodoistTask(task);
@@ -107,7 +107,7 @@ describe(mapTodoistTask, () => {
 
   test("labels 配列を正しくマップする", () => {
     // Arrange
-    const task: SdkTask = { ...baseSdkTask, labels: ["backend", "urgent"] };
+    const task: TodoistApiTask = { ...baseSdkTask, labels: ["backend", "urgent"] };
 
     // Act
     const result = mapTodoistTask(task);
