@@ -3,17 +3,34 @@ import { createTodoistClient, mapTodoistTask } from "./todoist.js";
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import type { TodoistTask } from "./types.js";
 
-type TodoistApiTask = Parameters<typeof mapTodoistTask>[0];
+type Task = Parameters<typeof mapTodoistTask>[0];
 
-const baseSdkTask: TodoistApiTask = {
+const baseSdkTask: Task = {
   id: "task_1",
+  userId: "user_1",
+  projectId: "project_1",
+  sectionId: null,
+  parentId: null,
+  addedByUid: null,
+  assignedByUid: null,
+  responsibleUid: null,
   content: "Test Task",
   description: "<!-- github-to-todoist: https://github.com/owner/repo/issues/1 -->",
   checked: false,
+  isDeleted: false,
+  isCollapsed: false,
+  isUncompletable: false,
   updatedAt: "2026-03-13T00:00:00Z",
   addedAt: "2026-03-01T00:00:00Z",
+  completedAt: null,
   due: null,
+  deadline: null,
+  duration: null,
   labels: [],
+  priority: 1,
+  childOrder: 0,
+  dayOrder: 0,
+  url: "https://todoist.com/app/task/task_1",
 };
 
 describe("getTask", () => {
@@ -67,7 +84,7 @@ describe(mapTodoistTask, () => {
 
   test("due.date がある場合 dueDate に設定する", () => {
     // Arrange
-    const task: TodoistApiTask = {
+    const task: Task = {
       ...baseSdkTask,
       due: {
         isRecurring: false,
@@ -85,7 +102,7 @@ describe(mapTodoistTask, () => {
 
   test("checked が true の場合 isCompleted は true", () => {
     // Arrange
-    const task: TodoistApiTask = { ...baseSdkTask, checked: true };
+    const task: Task = { ...baseSdkTask, checked: true };
 
     // Act
     const result = mapTodoistTask(task);
@@ -96,7 +113,7 @@ describe(mapTodoistTask, () => {
 
   test("updatedAt が null の場合 addedAt をフォールバックとして使用する", () => {
     // Arrange
-    const task: TodoistApiTask = { ...baseSdkTask, updatedAt: null };
+    const task: Task = { ...baseSdkTask, updatedAt: null };
 
     // Act
     const result = mapTodoistTask(task);
@@ -107,7 +124,7 @@ describe(mapTodoistTask, () => {
 
   test("labels 配列を正しくマップする", () => {
     // Arrange
-    const task: TodoistApiTask = { ...baseSdkTask, labels: ["backend", "urgent"] };
+    const task: Task = { ...baseSdkTask, labels: ["backend", "urgent"] };
 
     // Act
     const result = mapTodoistTask(task);

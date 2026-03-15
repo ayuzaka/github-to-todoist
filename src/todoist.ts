@@ -1,23 +1,6 @@
+import type { Task } from "@doist/todoist-api-typescript";
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import type { TodoistTask } from "./types.js";
-
-type TodoistApiTask = {
-  readonly id: string;
-  readonly content: string;
-  readonly description: string;
-  readonly checked: boolean;
-  readonly updatedAt: string | null;
-  readonly addedAt: string | null;
-  readonly due: {
-    readonly isRecurring: boolean;
-    readonly string: string;
-    readonly date: string;
-    readonly datetime?: string | null | undefined;
-    readonly timezone?: string | null | undefined;
-    readonly lang?: string | null | undefined;
-  } | null;
-  readonly labels: readonly string[];
-};
 
 export type CreateTaskParams = {
   readonly content: string;
@@ -42,7 +25,7 @@ export type TodoistClient = {
   readonly addLabelToTask: (taskId: string, labelName: string) => Promise<void>;
 };
 
-export const mapTodoistTask = (task: TodoistApiTask): TodoistTask => {
+export const mapTodoistTask = (task: Task): TodoistTask => {
   return {
     id: task.id,
     content: task.content,

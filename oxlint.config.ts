@@ -114,7 +114,7 @@ export default defineConfig({
     "typescript/no-useless-default-assignment": "error",
     "typescript/prefer-optional-chain": "error",
     "typescript/prefer-readonly": "error",
-    "typescript/prefer-readonly-parameter-types": "error",
+    "typescript/prefer-readonly-parameter-types": "off",
     "typescript/prefer-regexp-exec": "error",
     "typescript/ban-ts-comment": "error",
     "typescript/no-misused-promises": "error",
