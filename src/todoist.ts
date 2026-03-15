@@ -96,7 +96,7 @@ export const createTodoistClient = (token: string): TodoistClient => {
           typeof error === "object" &&
           error !== null &&
           "httpStatusCode" in error &&
-          (error as { httpStatusCode: unknown }).httpStatusCode === 404
+          error.httpStatusCode === 404
         ) {
           return null;
         }
