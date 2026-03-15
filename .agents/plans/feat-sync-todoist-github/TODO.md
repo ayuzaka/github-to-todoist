@@ -71,7 +71,7 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
 
 ## Section 6: 同期ロジック（書き込みフェーズ）
 
-- [ ] `src/sync-executor.ts` を実装する
+- [x] `src/sync-executor.ts` を実装する
   - `executeSyncPlan(plan: SyncPlan, github: GitHubClient, todoist: TodoistClient, cache: MappingCache, config: SyncConfig): Promise<{ result: SyncResult; updatedCache: MappingCache }>` — 書き込み実行
     - `toCreate`: Todoist タスク作成 → description に URL 埋め込み → キャッシュ追加 → last_synced_at を issue.createdAt で初期化
     - `toUpdate`: direction に応じて GitHub or Todoist を更新 → 両方成功時のみ last_synced_at 更新
@@ -80,7 +80,7 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
     - GitHub と Todoist への書き込みを Promise.allSettled で並列実行
     - 失敗エントリは SyncResult.errors に記録して続行
   - `SyncConfig` 型: { githubProjectOwner, githubProjectNumber, todoistProjectId }
-- [ ] `src/sync-executor.test.ts` を TDD で実装する
+- [x] `src/sync-executor.test.ts` を TDD で実装する
 
 ## Section 7: CLI エントリポイント
 
