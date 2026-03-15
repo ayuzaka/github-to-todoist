@@ -28,15 +28,15 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
 
 ## Section 3: GitHub クライアント（抽象層）
 
-- [ ] `src/github.ts` を実装する（`@octokit/graphql` の薄い抽象層）
+- [x] `src/github.ts` を実装する（`@octokit/graphql` の薄い抽象層）
   - `createGitHubClient(token: string): GitHubClient` — クライアントファクトリ
   - `GitHubClient.getProjectItems(owner: string, projectNumber: number): Promise<GitHubIssue[]>` — Project (v2) の全 OPEN Issue + Date フィールドを取得
-  - `GitHubClient.getIssue(owner: string, repo: string, issueNumber: number): Promise<GitHubIssue>` — 単体 Issue 取得
+  - `GitHubClient.getIssue(owner: string, repo: string, issueNumber: number): Promise<GitHubIssue | null>` — 単体 Issue 取得
   - `GitHubClient.updateIssueTitle(issueId: string, title: string): Promise<void>`
   - `GitHubClient.closeIssue(issueId: string): Promise<void>`
   - `GitHubClient.reopenIssue(issueId: string): Promise<void>`
-  - `GitHubClient.updateProjectItemDate(projectId: string, itemId: string, fieldId: string, date: string | null): Promise<void>` — Date フィールド更新
-- [ ] `src/github.test.ts` を TDD で実装する（vitest の vi.mock で @octokit/graphql をモック）
+  - `GitHubClient.updateProjectItemDate(params: UpdateProjectItemDateParams): Promise<void>` — Date フィールド更新
+- [x] `src/github.test.ts` を TDD で実装する（純粋関数 extractDueDate/mapProjectItem をテスト）
 
 ## Section 4: Todoist クライアント（抽象層）
 
