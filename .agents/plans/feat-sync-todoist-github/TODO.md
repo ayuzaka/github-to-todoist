@@ -40,7 +40,7 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
 
 ## Section 4: Todoist クライアント（抽象層）
 
-- [ ] `src/todoist.ts` を実装する（`@doist/todoist-api-typescript` の薄い抽象層）
+- [x] `src/todoist.ts` を実装する（`@doist/todoist-api-typescript` の薄い抽象層）
   - `createTodoistClient(token: string): TodoistClient` — クライアントファクトリ
   - `TodoistClient.getProjectTasks(projectId: string): Promise<TodoistTask[]>` — プロジェクト全タスク取得
   - `TodoistClient.getTask(taskId: string): Promise<TodoistTask | null>` — 単体タスク取得（存在しなければ null）
@@ -52,7 +52,7 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
   - `TodoistClient.addLabelToTask(taskId: string, labelId: string): Promise<void>` — 既存ラベルを保持して追加
   - `CreateTaskParams` 型: { content, description, dueDate?, labelIds?, projectId }
   - `UpdateTaskParams` 型: { content?, dueDate? }
-- [ ] `src/todoist.test.ts` を TDD で実装する（@doist/todoist-api-typescript をモック）
+- [x] `src/todoist.test.ts` を TDD で実装する（@doist/todoist-api-typescript をモック）
 
 ## Section 5: 同期ロジック（取得・比較フェーズ）
 
