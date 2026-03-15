@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { extractDueDate, mapProjectItem } from "./github.js";
-import type { GitHubIssue } from "./types.js";
-import type { ProjectItemNode } from "./github.js";
+import { extractDueDate, mapProjectItem } from "./github";
+import type { GitHubIssue } from "./types";
+import type { ProjectItemNode } from "./github";
 
 const baseIssueContent = {
   __typename: "Issue" as const,

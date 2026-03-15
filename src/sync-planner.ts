@@ -6,7 +6,7 @@ import type {
   SyncEntry,
   SyncPlan,
   TodoistTask,
-} from "./types.js";
+} from "./types";
 
 export const extractIssueUrlFromDescription = (description: string): string | null => {
   const match = /<!-- github-to-todoist: (https?:\/\/[^\s]+) -->/.exec(description);

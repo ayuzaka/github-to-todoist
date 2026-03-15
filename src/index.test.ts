@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { validateEnv } from "./index.js";
+import { validateEnv } from "./index";
 
 describe(validateEnv, () => {
   beforeEach(() => {

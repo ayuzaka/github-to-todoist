@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { Mapping, MappingCache } from "./types.js";
+import type { Mapping, MappingCache } from "./types";
 
 const isMappingCache = (value: unknown): value is MappingCache => {
   return (

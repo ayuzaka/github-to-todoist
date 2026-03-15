@@ -1,7 +1,7 @@
-import type { Mapping, MappingCache, SyncPlan, SyncResult } from "./types.js";
-import type { GitHubClient } from "./github.js";
-import type { TodoistClient } from "./todoist.js";
-import { buildIssueUrlComment } from "./sync-planner.js";
+import type { Mapping, MappingCache, SyncPlan, SyncResult } from "./types";
+import type { GitHubClient } from "./github";
+import type { TodoistClient } from "./todoist";
+import { buildIssueUrlComment } from "./sync-planner";
 
 export type SyncConfig = {
   readonly githubProjectOwner: string;

@@ -1,8 +1,8 @@
-import { getMappingFilePath, loadMappingCache, saveMappingCache } from "./mapping.js";
-import { createGitHubClient } from "./github.js";
-import { createTodoistClient } from "./todoist.js";
-import { executeSyncPlan } from "./sync-executor.js";
-import { planSync } from "./sync-planner.js";
+import { getMappingFilePath, loadMappingCache, saveMappingCache } from "./mapping";
+import { createGitHubClient } from "./github";
+import { createTodoistClient } from "./todoist";
+import { executeSyncPlan } from "./sync-executor";
+import { planSync } from "./sync-planner";
 
 type EnvConfig = {
   readonly githubToken: string;

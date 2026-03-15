@@ -1,6 +1,6 @@
 import type { Task } from "@doist/todoist-api-typescript";
 import { TodoistApi } from "@doist/todoist-api-typescript";
-import type { TodoistTask } from "./types.js";
+import type { TodoistTask } from "./types";
 
 export type CreateTaskParams = {
   readonly content: string;

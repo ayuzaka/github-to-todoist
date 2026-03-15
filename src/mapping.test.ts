@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { Mapping, MappingCache } from "./types.js";
+import type { Mapping, MappingCache } from "./types";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   findMappingByIssueId,
@@ -11,7 +11,7 @@ import {
   removeMapping,
   saveMappingCache,
   upsertMapping,
-} from "./mapping.js";
+} from "./mapping";
 
 vi.mock(import("node:fs/promises"));
 

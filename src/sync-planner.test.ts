@@ -5,13 +5,13 @@ import type {
   SyncDirection,
   SyncPlan,
   TodoistTask,
-} from "./types.js";
+} from "./types";
 import {
   buildIssueUrlComment,
   determineSyncDirection,
   extractIssueUrlFromDescription,
   planSync,
-} from "./sync-planner.js";
+} from "./sync-planner";
 import { describe, expect, test } from "vitest";
 
 const baseIssue: GitHubIssue = {

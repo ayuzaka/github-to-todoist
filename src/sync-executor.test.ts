@@ -1,9 +1,9 @@
-import type { GitHubIssue, Mapping, MappingCache, SyncPlan, TodoistTask } from "./types.js";
+import type { GitHubIssue, Mapping, MappingCache, SyncPlan, TodoistTask } from "./types";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { GitHubClient } from "./github.js";
-import type { SyncConfig } from "./sync-executor.js";
-import type { TodoistClient } from "./todoist.js";
-import { executeSyncPlan } from "./sync-executor.js";
+import type { GitHubClient } from "./github";
+import type { SyncConfig } from "./sync-executor";
+import type { TodoistClient } from "./todoist";
+import { executeSyncPlan } from "./sync-executor";
 
 const baseIssue: GitHubIssue = {
   id: "I_001",

@@ -1,4 +1,4 @@
-import type { GitHubIssue } from "./types.js";
+import type { GitHubIssue } from "./types";
 import { graphql } from "@octokit/graphql";
 
 export type UpdateProjectItemDateParams = {
