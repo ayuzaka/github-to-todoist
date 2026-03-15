@@ -50,8 +50,10 @@ describe(extractIssueUrlFromDescription, () => {
   test("有効なコメントから URL を抽出する", () => {
     // Arrange
     const description = "<!-- github-to-todoist: https://github.com/owner/repo/issues/1 -->";
+
     // Act
     const result = extractIssueUrlFromDescription(description);
+
     // Assert
     expect(result).toBe("https://github.com/owner/repo/issues/1");
   });
@@ -59,6 +61,7 @@ describe(extractIssueUrlFromDescription, () => {
   test("空文字列の場合 null を返す", () => {
     // Act
     const result = extractIssueUrlFromDescription("");
+
     // Assert
     expect(result).toBeNull();
   });
@@ -66,6 +69,7 @@ describe(extractIssueUrlFromDescription, () => {
   test("コメントがない場合 null を返す", () => {
     // Act
     const result = extractIssueUrlFromDescription("Some random text");
+
     // Assert
     expect(result).toBeNull();
   });
@@ -74,8 +78,10 @@ describe(extractIssueUrlFromDescription, () => {
     // Arrange
     const description =
       "Some text\n<!-- github-to-todoist: https://github.com/owner/repo/issues/42 -->\nmore text";
+
     // Act
     const result = extractIssueUrlFromDescription(description);
+
     // Assert
     expect(result).toBe("https://github.com/owner/repo/issues/42");
   });
@@ -85,8 +91,10 @@ describe(buildIssueUrlComment, () => {
   test("GitHub Issue URL から HTML コメントを生成する", () => {
     // Arrange
     const url = "https://github.com/owner/repo/issues/1";
+
     // Act
     const result = buildIssueUrlComment(url);
+
     // Assert
     expect(result).toBe("<!-- github-to-todoist: https://github.com/owner/repo/issues/1 -->");
   });
@@ -98,8 +106,10 @@ describe(determineSyncDirection, () => {
     const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-12T00:00:00Z" };
     const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-13T00:00:00Z" };
     const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-10T00:00:00Z" };
+
     // Act
     const result = determineSyncDirection(mapping, issue, task);
+
     // Assert
     expect(result).toBe<SyncDirection>("github-to-todoist");
   });
@@ -109,8 +119,10 @@ describe(determineSyncDirection, () => {
     const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-12T00:00:00Z" };
     const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" };
     const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-13T00:00:00Z" };
+
     // Act
     const result = determineSyncDirection(mapping, issue, task);
+
     // Assert
     expect(result).toBe<SyncDirection>("todoist-to-github");
   });
@@ -120,8 +132,10 @@ describe(determineSyncDirection, () => {
     const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-10T00:00:00Z" };
     const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-13T00:00:00Z" };
     const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-12T00:00:00Z" };
+
     // Act
     const result = determineSyncDirection(mapping, issue, task);
+
     // Assert
     expect(result).toBe<SyncDirection>("github-to-todoist");
   });
@@ -131,8 +145,10 @@ describe(determineSyncDirection, () => {
     const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-10T00:00:00Z" };
     const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-12T00:00:00Z" };
     const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-13T00:00:00Z" };
+
     // Act
     const result = determineSyncDirection(mapping, issue, task);
+
     // Assert
     expect(result).toBe<SyncDirection>("todoist-to-github");
   });
@@ -143,8 +159,10 @@ describe(determineSyncDirection, () => {
     const sameTime = "2026-03-13T00:00:00Z";
     const issue: GitHubIssue = { ...baseIssue, updatedAt: sameTime };
     const task: TodoistTask = { ...baseTask, updatedAt: sameTime };
+
     // Act
     const result = determineSyncDirection(mapping, issue, task);
+
     // Assert
     expect(result).toBe<SyncDirection>("github-to-todoist");
   });
@@ -154,8 +172,10 @@ describe(determineSyncDirection, () => {
     const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-14T00:00:00Z" };
     const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" };
     const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-10T00:00:00Z" };
+
     // Act
     const result = determineSyncDirection(mapping, issue, task);
+
     // Assert
     expect(result).toBe<SyncDirection>("skip");
   });
@@ -165,8 +185,10 @@ describe(determineSyncDirection, () => {
     const mapping: Mapping = { ...baseMapping, last_synced_at: null };
     const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-13T00:00:00Z" };
     const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-12T00:00:00Z" };
+
     // Act
     const result = determineSyncDirection(mapping, issue, task);
+
     // Assert
     expect(result).toBe<SyncDirection>("github-to-todoist");
   });
@@ -177,8 +199,10 @@ describe(planSync, () => {
     // Arrange
     const issues: readonly GitHubIssue[] = [baseIssue];
     const tasks: readonly TodoistTask[] = [];
+
     // Act
     const result = planSync(issues, tasks, emptyCache);
+
     // Assert
     expect(result.toCreate).toStrictEqual([baseIssue]);
     expect(result.toUpdate).toStrictEqual([]);
@@ -190,8 +214,10 @@ describe(planSync, () => {
     const issues: readonly GitHubIssue[] = [{ ...baseIssue, updatedAt: "2026-03-13T00:00:00Z" }];
     const tasks: readonly TodoistTask[] = [{ ...baseTask, updatedAt: "2026-03-10T00:00:00Z" }];
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const result = planSync(issues, tasks, cache);
+
     // Assert
     expect(result.toUpdate).toHaveLength(1);
     expect(result.toUpdate[0]?.direction).toBe<SyncDirection>("github-to-todoist");
@@ -204,8 +230,10 @@ describe(planSync, () => {
     const issues: readonly GitHubIssue[] = [{ ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" }];
     const tasks: readonly TodoistTask[] = [{ ...baseTask, updatedAt: "2026-03-10T00:00:00Z" }];
     const cache: MappingCache = { mappings: [mapping] };
+
     // Act
     const result = planSync(issues, tasks, cache);
+
     // Assert
     expect(result.toSkip).toBe(1);
     expect(result.toUpdate).toStrictEqual([]);
@@ -216,8 +244,10 @@ describe(planSync, () => {
     const issues: readonly GitHubIssue[] = [baseIssue];
     const tasks: readonly TodoistTask[] = [];
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const result: SyncPlan = planSync(issues, tasks, cache);
+
     // Assert
     expect(result.toDelete).toStrictEqual([baseMapping]);
     expect(result.toCreate).toStrictEqual([]);
@@ -229,8 +259,10 @@ describe(planSync, () => {
     const issues: readonly GitHubIssue[] = [closedIssue];
     const tasks: readonly TodoistTask[] = [baseTask];
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const result = planSync(issues, tasks, cache);
+
     // Assert
     expect(result.toComplete).toStrictEqual([baseMapping]);
     expect(result.toUpdate).toStrictEqual([]);
@@ -242,8 +274,10 @@ describe(planSync, () => {
     const issues: readonly GitHubIssue[] = [removedIssue];
     const tasks: readonly TodoistTask[] = [baseTask];
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const result = planSync(issues, tasks, cache);
+
     // Assert
     expect(result.toDelete).toStrictEqual([baseMapping]);
   });
@@ -252,8 +286,10 @@ describe(planSync, () => {
     // Arrange
     const issues: readonly GitHubIssue[] = [baseIssue];
     const tasks: readonly TodoistTask[] = [baseTask];
+
     // Act
     const result = planSync(issues, tasks, emptyCache);
+
     // Assert
     expect(result.toUpdate).toHaveLength(1);
     expect(result.toCreate).toStrictEqual([]);
@@ -265,8 +301,10 @@ describe(planSync, () => {
     const issues: readonly GitHubIssue[] = [closedIssue];
     const tasks: readonly TodoistTask[] = [];
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const result = planSync(issues, tasks, cache);
+
     // Assert
     expect(result.toDelete).toStrictEqual([baseMapping]);
     expect(result.toComplete).toStrictEqual([]);
@@ -277,8 +315,10 @@ describe(planSync, () => {
     const issues: readonly GitHubIssue[] = [];
     const tasks: readonly TodoistTask[] = [];
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const result = planSync(issues, tasks, cache);
+
     // Assert
     expect(result.toDelete).toStrictEqual([baseMapping]);
   });
@@ -288,8 +328,10 @@ describe(planSync, () => {
     const issues: readonly GitHubIssue[] = [];
     const tasks: readonly TodoistTask[] = [baseTask];
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const result = planSync(issues, tasks, cache);
+
     // Assert
     expect(result.toDelete).toStrictEqual([]);
     expect(result.toComplete).toStrictEqual([]);

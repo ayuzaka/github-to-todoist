@@ -38,8 +38,10 @@ describe(getMappingFilePath, () => {
       "github-to-todoist",
       "mapping.json",
     );
+
     // Act
     const result = getMappingFilePath();
+
     // Assert
     expect(result).toBe(expected);
   });
@@ -47,8 +49,10 @@ describe(getMappingFilePath, () => {
   test("MAPPING_FILE_PATH が設定されている場合はその値を返す", () => {
     // Arrange
     process.env["MAPPING_FILE_PATH"] = "/custom/path/mapping.json";
+
     // Act
     const result = getMappingFilePath();
+
     // Assert
     expect(result).toBe("/custom/path/mapping.json");
   });
@@ -63,8 +67,10 @@ describe(getMappingFilePath, () => {
       "github-to-todoist",
       "mapping.json",
     );
+
     // Act
     const result = getMappingFilePath();
+
     // Assert
     expect(result).toBe(expected);
   });
@@ -73,8 +79,10 @@ describe(getMappingFilePath, () => {
     // Arrange
     process.env["XDG_DATA_HOME"] = "/custom/xdg";
     const expected = path.join("/custom/xdg", "github-to-todoist", "mapping.json");
+
     // Act
     const result = getMappingFilePath();
+
     // Assert
     expect(result).toBe(expected);
   });
@@ -83,8 +91,10 @@ describe(getMappingFilePath, () => {
     // Arrange
     process.env["MAPPING_FILE_PATH"] = "/explicit/path.json";
     process.env["XDG_DATA_HOME"] = "/custom/xdg";
+
     // Act
     const result = getMappingFilePath();
+
     // Assert
     expect(result).toBe("/explicit/path.json");
   });
@@ -95,8 +105,10 @@ describe(loadMappingCache, () => {
     // Arrange
     const cache: MappingCache = { mappings: [mockMapping] };
     vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify(cache));
+
     // Act
     const result = await loadMappingCache("/some/path.json");
+
     // Assert
     expect(result).toStrictEqual(cache);
   });
@@ -106,8 +118,10 @@ describe(loadMappingCache, () => {
     vi.mocked(fs.readFile).mockRejectedValue(
       Object.assign(new Error("ENOENT"), { code: "ENOENT" }),
     );
+
     // Act
     const result = await loadMappingCache("/some/path.json");
+
     // Assert
     expect(result).toStrictEqual({ mappings: [] });
   });
@@ -119,8 +133,10 @@ describe(saveMappingCache, () => {
     vi.mocked(fs.mkdir).mockResolvedValue("");
     vi.mocked(fs.writeFile).mockResolvedValue();
     const cache: MappingCache = { mappings: [mockMapping] };
+
     // Act
     await saveMappingCache("/some/dir/mapping.json", cache);
+
     // Assert
     expect(fs.mkdir).toHaveBeenCalledWith("/some/dir", { recursive: true });
     expect(fs.writeFile).toHaveBeenCalledWith(
@@ -135,8 +151,10 @@ describe(findMappingByIssueId, () => {
   test("一致する issue_id が存在する場合はそのマッピングを返す", () => {
     // Arrange
     const cache: MappingCache = { mappings: [mockMapping] };
+
     // Act
     const result = findMappingByIssueId(cache, "I_xxx");
+
     // Assert
     expect(result).toStrictEqual(mockMapping);
   });
@@ -144,8 +162,10 @@ describe(findMappingByIssueId, () => {
   test("一致する issue_id が存在しない場合は undefined を返す", () => {
     // Arrange
     const cache: MappingCache = { mappings: [mockMapping] };
+
     // Act
     const result = findMappingByIssueId(cache, "I_not_found");
+
     // Assert
     expect(result).toBeUndefined();
   });
@@ -155,8 +175,10 @@ describe(findMappingByTaskId, () => {
   test("一致する task_id が存在する場合はそのマッピングを返す", () => {
     // Arrange
     const cache: MappingCache = { mappings: [mockMapping] };
+
     // Act
     const result = findMappingByTaskId(cache, "123456789");
+
     // Assert
     expect(result).toStrictEqual(mockMapping);
   });
@@ -164,8 +186,10 @@ describe(findMappingByTaskId, () => {
   test("一致する task_id が存在しない場合は undefined を返す", () => {
     // Arrange
     const cache: MappingCache = { mappings: [] };
+
     // Act
     const result = findMappingByTaskId(cache, "999");
+
     // Assert
     expect(result).toBeUndefined();
   });
@@ -175,8 +199,10 @@ describe(upsertMapping, () => {
   test("既存エントリが存在しない場合は追加する", () => {
     // Arrange
     const cache: MappingCache = { mappings: [] };
+
     // Act
     const result = upsertMapping(cache, mockMapping);
+
     // Assert
     expect(result.mappings).toHaveLength(1);
     expect(result.mappings[0]).toStrictEqual(mockMapping);
@@ -186,8 +212,10 @@ describe(upsertMapping, () => {
     // Arrange
     const cache: MappingCache = { mappings: [mockMapping] };
     const updated: Mapping = { ...mockMapping, todoist_task_id: "new_id" };
+
     // Act
     const result = upsertMapping(cache, updated);
+
     // Assert
     expect(result.mappings).toHaveLength(1);
     expect(result.mappings[0]?.todoist_task_id).toBe("new_id");
@@ -196,8 +224,10 @@ describe(upsertMapping, () => {
   test("元のキャッシュを変更しない（イミュータブル）", () => {
     // Arrange
     const cache: MappingCache = { mappings: [] };
+
     // Act
     upsertMapping(cache, mockMapping);
+
     // Assert
     expect(cache.mappings).toHaveLength(0);
   });
@@ -207,8 +237,10 @@ describe(removeMapping, () => {
   test("一致する issue_id のエントリを削除する", () => {
     // Arrange
     const cache: MappingCache = { mappings: [mockMapping] };
+
     // Act
     const result = removeMapping(cache, "I_xxx");
+
     // Assert
     expect(result.mappings).toHaveLength(0);
   });
@@ -216,8 +248,10 @@ describe(removeMapping, () => {
   test("一致しない issue_id の場合は変更なし", () => {
     // Arrange
     const cache: MappingCache = { mappings: [mockMapping] };
+
     // Act
     const result = removeMapping(cache, "I_not_found");
+
     // Assert
     expect(result.mappings).toHaveLength(1);
   });
@@ -225,8 +259,10 @@ describe(removeMapping, () => {
   test("元のキャッシュを変更しない（イミュータブル）", () => {
     // Arrange
     const cache: MappingCache = { mappings: [mockMapping] };
+
     // Act
     removeMapping(cache, "I_xxx");
+
     // Assert
     expect(cache.mappings).toHaveLength(1);
   });

@@ -83,6 +83,7 @@ describe(executeSyncPlan, () => {
     const newTask: TodoistTask = { ...baseTask, id: "task_new" };
     vi.mocked(mockTodoist.createTask).mockResolvedValue(newTask);
     const plan: SyncPlan = { ...makeEmptyPlan(), toCreate: [baseIssue] };
+
     // Act
     const { result, updatedCache } = await executeSyncPlan(plan, {
       github: mockGitHub,
@@ -90,6 +91,7 @@ describe(executeSyncPlan, () => {
       cache: emptyCache,
       config,
     });
+
     // Assert
     expect(result.created).toBe(1);
     expect(updatedCache.mappings).toHaveLength(1);
@@ -101,6 +103,7 @@ describe(executeSyncPlan, () => {
     // Arrange
     const plan: SyncPlan = { ...makeEmptyPlan(), toDelete: [baseMapping] };
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const { result, updatedCache } = await executeSyncPlan(plan, {
       github: mockGitHub,
@@ -108,6 +111,7 @@ describe(executeSyncPlan, () => {
       cache,
       config,
     });
+
     // Assert
     expect(result.deleted).toBe(1);
     expect(updatedCache.mappings).toHaveLength(0);
@@ -118,6 +122,7 @@ describe(executeSyncPlan, () => {
     // Arrange
     const plan: SyncPlan = { ...makeEmptyPlan(), toComplete: [baseMapping] };
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const { result, updatedCache } = await executeSyncPlan(plan, {
       github: mockGitHub,
@@ -125,6 +130,7 @@ describe(executeSyncPlan, () => {
       cache,
       config,
     });
+
     // Assert
     expect(result.deleted).toBe(1);
     expect(updatedCache.mappings).toHaveLength(0);
@@ -140,6 +146,7 @@ describe(executeSyncPlan, () => {
       ],
     };
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const { result, updatedCache } = await executeSyncPlan(plan, {
       github: mockGitHub,
@@ -147,6 +154,7 @@ describe(executeSyncPlan, () => {
       cache,
       config,
     });
+
     // Assert
     expect(result.updated).toBe(1);
     expect(vi.mocked(mockTodoist.updateTask)).toHaveBeenCalledWith(baseTask.id, {
@@ -165,6 +173,7 @@ describe(executeSyncPlan, () => {
       ],
     };
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     const { result } = await executeSyncPlan(plan, {
       github: mockGitHub,
@@ -172,6 +181,7 @@ describe(executeSyncPlan, () => {
       cache,
       config,
     });
+
     // Assert
     expect(result.updated).toBe(1);
     expect(vi.mocked(mockGitHub.updateIssueTitle)).toHaveBeenCalledWith(
@@ -195,6 +205,7 @@ describe(executeSyncPlan, () => {
       ],
     };
     const cache: MappingCache = { mappings: [baseMapping] };
+
     // Act
     await executeSyncPlan(plan, {
       github: mockGitHub,
@@ -202,6 +213,7 @@ describe(executeSyncPlan, () => {
       cache,
       config,
     });
+
     // Assert
     expect(vi.mocked(mockGitHub.closeIssue)).toHaveBeenCalledWith(baseIssue.id);
   });
@@ -210,6 +222,7 @@ describe(executeSyncPlan, () => {
     // Arrange
     vi.mocked(mockTodoist.createTask).mockRejectedValue(new Error("API error"));
     const plan: SyncPlan = { ...makeEmptyPlan(), toCreate: [baseIssue] };
+
     // Act
     const { result, updatedCache } = await executeSyncPlan(plan, {
       github: mockGitHub,
@@ -217,6 +230,7 @@ describe(executeSyncPlan, () => {
       cache: emptyCache,
       config,
     });
+
     // Assert
     expect(result.errors).toHaveLength(1);
     expect(result.created).toBe(0);
@@ -226,6 +240,7 @@ describe(executeSyncPlan, () => {
   test("toSkip は result.skipped に反映される", async () => {
     // Arrange
     const plan: SyncPlan = { ...makeEmptyPlan(), toSkip: 5 };
+
     // Act
     const { result } = await executeSyncPlan(plan, {
       github: mockGitHub,
@@ -233,6 +248,7 @@ describe(executeSyncPlan, () => {
       cache: emptyCache,
       config,
     });
+
     // Assert
     expect(result.skipped).toBe(5);
   });

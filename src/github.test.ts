@@ -24,8 +24,10 @@ describe(extractDueDate, () => {
         date: "2026-04-01",
       },
     ];
+
     // Act
     const result = extractDueDate(nodes);
+
     // Assert
     expect(result).toBe("2026-04-01");
   });
@@ -33,8 +35,10 @@ describe(extractDueDate, () => {
   test("Date フィールドがない場合は null を返す", () => {
     // Arrange
     const nodes = [{ __typename: "ProjectV2ItemFieldTextValue", field: { name: "Title" } }];
+
     // Act
     const result = extractDueDate(nodes);
+
     // Assert
     expect(result).toBeNull();
   });
@@ -42,8 +46,10 @@ describe(extractDueDate, () => {
   test("空配列の場合は null を返す", () => {
     // Arrange
     const nodes: typeof extractDueDate extends (nodes: infer N) => unknown ? N : never = [];
+
     // Act
     const result = extractDueDate(nodes);
+
     // Assert
     expect(result).toBeNull();
   });
@@ -76,8 +82,10 @@ describe(mapProjectItem, () => {
       projectItemId: "PVTI_xxx",
       dueDate: "2026-04-01",
     };
+
     // Act
     const result = mapProjectItem(node);
+
     // Assert
     expect(result).toStrictEqual(expected);
   });
@@ -89,8 +97,10 @@ describe(mapProjectItem, () => {
       content: { __typename: "DraftIssue" },
       fieldValues: { nodes: [] },
     };
+
     // Act
     const result = mapProjectItem(node);
+
     // Assert
     expect(result).toBeNull();
   });
@@ -102,8 +112,10 @@ describe(mapProjectItem, () => {
       content: null,
       fieldValues: { nodes: [] },
     };
+
     // Act
     const result = mapProjectItem(node);
+
     // Assert
     expect(result).toBeNull();
   });
@@ -115,8 +127,10 @@ describe(mapProjectItem, () => {
       content: { ...baseIssueContent, state: "CLOSED" },
       fieldValues: { nodes: [] },
     };
+
     // Act
     const result = mapProjectItem(node);
+
     // Assert
     expect(result?.state).toBe("CLOSED");
   });
@@ -128,8 +142,10 @@ describe(mapProjectItem, () => {
       content: baseIssueContent,
       fieldValues: { nodes: [] },
     };
+
     // Act
     const result = mapProjectItem(node);
+
     // Assert
     expect(result?.dueDate).toBeNull();
   });

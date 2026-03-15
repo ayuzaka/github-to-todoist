@@ -26,8 +26,10 @@ describe("getTask", () => {
     const error = Object.assign(new Error("Not Found"), { httpStatusCode: 404 });
     vi.spyOn(TodoistApi.prototype, "getTask").mockRejectedValue(error);
     const client = createTodoistClient("token");
+
     // Act
     const result = await client.getTask("task_1");
+
     // Assert
     expect(result).toBeNull();
   });
@@ -37,6 +39,7 @@ describe("getTask", () => {
     const error = Object.assign(new Error("Unauthorized"), { httpStatusCode: 401 });
     vi.spyOn(TodoistApi.prototype, "getTask").mockRejectedValue(error);
     const client = createTodoistClient("token");
+
     // Act & Assert
     await expect(client.getTask("task_1")).rejects.toThrow("Unauthorized");
   });
@@ -54,8 +57,10 @@ describe(mapTodoistTask, () => {
       dueDate: null,
       labels: [],
     };
+
     // Act
     const result = mapTodoistTask(baseSdkTask);
+
     // Assert
     expect(result).toStrictEqual(expected);
   });
@@ -70,8 +75,10 @@ describe(mapTodoistTask, () => {
         date: "2026-04-01",
       },
     };
+
     // Act
     const result = mapTodoistTask(task);
+
     // Assert
     expect(result.dueDate).toBe("2026-04-01");
   });
@@ -79,8 +86,10 @@ describe(mapTodoistTask, () => {
   test("checked が true の場合 isCompleted は true", () => {
     // Arrange
     const task: SdkTask = { ...baseSdkTask, checked: true };
+
     // Act
     const result = mapTodoistTask(task);
+
     // Assert
     expect(result.isCompleted).toBeTruthy();
   });
@@ -88,8 +97,10 @@ describe(mapTodoistTask, () => {
   test("updatedAt が null の場合 addedAt をフォールバックとして使用する", () => {
     // Arrange
     const task: SdkTask = { ...baseSdkTask, updatedAt: null };
+
     // Act
     const result = mapTodoistTask(task);
+
     // Assert
     expect(result.updatedAt).toBe("2026-03-01T00:00:00Z");
   });
@@ -97,8 +108,10 @@ describe(mapTodoistTask, () => {
   test("labels 配列を正しくマップする", () => {
     // Arrange
     const task: SdkTask = { ...baseSdkTask, labels: ["backend", "urgent"] };
+
     // Act
     const result = mapTodoistTask(task);
+
     // Assert
     expect(result.labels).toStrictEqual(["backend", "urgent"]);
   });

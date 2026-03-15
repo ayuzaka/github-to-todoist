@@ -17,6 +17,7 @@ describe(validateEnv, () => {
   test("全ての必須環境変数が揃っている場合、設定を返す", () => {
     // Act
     const result = validateEnv();
+
     // Assert
     expect(result.githubToken).toBe("gh_token");
     expect(result.githubProjectNumber).toBe(42);
@@ -28,6 +29,7 @@ describe(validateEnv, () => {
   test("GITHUB_TOKEN が未設定の場合エラーをスローする", () => {
     // Arrange
     vi.stubEnv("GITHUB_TOKEN", "");
+
     // Act & Assert
     expect(() => validateEnv()).toThrow("GITHUB_TOKEN");
   });
@@ -35,6 +37,7 @@ describe(validateEnv, () => {
   test("GITHUB_PROJECT_NUMBER が未設定の場合エラーをスローする", () => {
     // Arrange
     vi.stubEnv("GITHUB_PROJECT_NUMBER", "");
+
     // Act & Assert
     expect(() => validateEnv()).toThrow("GITHUB_PROJECT_NUMBER");
   });
@@ -42,6 +45,7 @@ describe(validateEnv, () => {
   test("GITHUB_PROJECT_OWNER が未設定の場合エラーをスローする", () => {
     // Arrange
     vi.stubEnv("GITHUB_PROJECT_OWNER", "");
+
     // Act & Assert
     expect(() => validateEnv()).toThrow("GITHUB_PROJECT_OWNER");
   });
@@ -49,6 +53,7 @@ describe(validateEnv, () => {
   test("TODOIST_TOKEN が未設定の場合エラーをスローする", () => {
     // Arrange
     vi.stubEnv("TODOIST_TOKEN", "");
+
     // Act & Assert
     expect(() => validateEnv()).toThrow("TODOIST_TOKEN");
   });
@@ -56,6 +61,7 @@ describe(validateEnv, () => {
   test("TODOIST_PROJECT_ID が未設定の場合エラーをスローする", () => {
     // Arrange
     vi.stubEnv("TODOIST_PROJECT_ID", "");
+
     // Act & Assert
     expect(() => validateEnv()).toThrow("TODOIST_PROJECT_ID");
   });
@@ -63,6 +69,7 @@ describe(validateEnv, () => {
   test("GITHUB_PROJECT_NUMBER が数値でない場合エラーをスローする", () => {
     // Arrange
     vi.stubEnv("GITHUB_PROJECT_NUMBER", "not_a_number");
+
     // Act & Assert
     expect(() => validateEnv()).toThrow("GITHUB_PROJECT_NUMBER");
   });
