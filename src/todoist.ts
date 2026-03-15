@@ -91,8 +91,16 @@ export const createTodoistClient = (token: string): TodoistClient => {
       try {
         const task = await api.getTask(taskId);
         return mapTodoistTask(task);
-      } catch {
-        return null;
+      } catch (error) {
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "httpStatusCode" in error &&
+          (error as { httpStatusCode: unknown }).httpStatusCode === 404
+        ) {
+          return null;
+        }
+        throw error;
       }
     },
 

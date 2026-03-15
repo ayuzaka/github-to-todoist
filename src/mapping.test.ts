@@ -26,6 +26,7 @@ const mockMapping: Mapping = {
 describe(getMappingFilePath, () => {
   beforeEach(() => {
     delete process.env["MAPPING_FILE_PATH"];
+    delete process.env["XDG_DATA_HOME"];
   });
 
   test("環境変数が設定されていない場合はデフォルトパスを返す", () => {
@@ -50,6 +51,42 @@ describe(getMappingFilePath, () => {
     const result = getMappingFilePath();
     // Assert
     expect(result).toBe("/custom/path/mapping.json");
+  });
+
+  test("MAPPING_FILE_PATH が空文字の場合はデフォルトパスを返す", () => {
+    // Arrange
+    process.env["MAPPING_FILE_PATH"] = "";
+    const expected = path.join(
+      os.homedir(),
+      ".local",
+      "share",
+      "github-to-todoist",
+      "mapping.json",
+    );
+    // Act
+    const result = getMappingFilePath();
+    // Assert
+    expect(result).toBe(expected);
+  });
+
+  test("XDG_DATA_HOME が設定されている場合はその値をベースに返す", () => {
+    // Arrange
+    process.env["XDG_DATA_HOME"] = "/custom/xdg";
+    const expected = path.join("/custom/xdg", "github-to-todoist", "mapping.json");
+    // Act
+    const result = getMappingFilePath();
+    // Assert
+    expect(result).toBe(expected);
+  });
+
+  test("MAPPING_FILE_PATH が設定されている場合は XDG_DATA_HOME より優先される", () => {
+    // Arrange
+    process.env["MAPPING_FILE_PATH"] = "/explicit/path.json";
+    process.env["XDG_DATA_HOME"] = "/custom/xdg";
+    // Act
+    const result = getMappingFilePath();
+    // Assert
+    expect(result).toBe("/explicit/path.json");
   });
 });
 

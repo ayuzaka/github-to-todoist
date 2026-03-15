@@ -13,10 +13,16 @@ const isMappingCache = (value: unknown): value is MappingCache => {
 };
 
 export const getMappingFilePath = (): string => {
-  return (
-    process.env["MAPPING_FILE_PATH"] ??
-    path.join(os.homedir(), ".local", "share", "github-to-todoist", "mapping.json")
-  );
+  const custom = process.env["MAPPING_FILE_PATH"];
+  if (custom !== undefined && custom !== "") {
+    return custom;
+  }
+  const xdgDataHome = process.env["XDG_DATA_HOME"];
+  const dataDir =
+    xdgDataHome !== undefined && xdgDataHome !== ""
+      ? xdgDataHome
+      : path.join(os.homedir(), ".local", "share");
+  return path.join(dataDir, "github-to-todoist", "mapping.json");
 };
 
 export const loadMappingCache = async (filePath: string): Promise<MappingCache> => {
