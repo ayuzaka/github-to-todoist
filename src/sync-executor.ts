@@ -6,8 +6,8 @@ import { buildIssueUrlComment } from "./sync-planner.js";
 export type SyncConfig = {
   readonly githubProjectOwner: string;
   readonly githubProjectNumber: number;
-  readonly githubProjectId: string;
-  readonly githubDateFieldId: string;
+  readonly githubProjectId?: string;
+  readonly githubDateFieldId?: string;
   readonly todoistProjectId: string;
 };
 
@@ -127,11 +127,16 @@ export const executeSyncPlan = async (
         if (task.isCompleted) {
           await github.closeIssue(issue.id);
         }
-        if (issue.projectItemId !== null) {
+        const { githubProjectId, githubDateFieldId } = config;
+        if (
+          issue.projectItemId !== null &&
+          githubProjectId !== undefined &&
+          githubDateFieldId !== undefined
+        ) {
           await github.updateProjectItemDate({
-            projectId: config.githubProjectId,
+            projectId: githubProjectId,
             itemId: issue.projectItemId,
-            fieldId: config.githubDateFieldId,
+            fieldId: githubDateFieldId,
             date: task.dueDate,
           });
         }

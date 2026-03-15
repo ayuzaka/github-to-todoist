@@ -84,7 +84,7 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
 
 ## Section 7: CLI エントリポイント
 
-- [ ] `src/index.ts` を実装する
+- [x] `src/index.ts` を実装する
   - 環境変数バリデーション（GITHUB_TOKEN, GITHUB_PROJECT_NUMBER, GITHUB_PROJECT_OWNER, TODOIST_TOKEN, TODOIST_PROJECT_ID）
   - `sync` コマンドの実装
     - フェーズ1: GitHub/Todoist からデータ取得 → planSync
@@ -93,4 +93,4 @@ SPEC: `.agents/plans/feat-sync-todoist-github/SPEC.md`
     - サマリ出力: `✓ Synced: X created, Y updated, Z deleted, W skipped`
     - エラーがあれば stderr に出力
   - process.exit(1) でエラー終了
-- [ ] `src/index.test.ts` を TDD で実装する（env バリデーションのみ）
+- [x] `src/index.test.ts` を TDD で実装する（env バリデーションのみ）
