@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { Mapping, MappingCache } from "./types";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   findMappingByIssueId,
   findMappingByTaskId,
@@ -25,8 +25,12 @@ const mockMapping: Mapping = {
 
 describe(getMappingFilePath, () => {
   beforeEach(() => {
-    delete process.env["MAPPING_FILE_PATH"];
-    delete process.env["XDG_DATA_HOME"];
+    vi.stubEnv("MAPPING_FILE_PATH", "");
+    vi.stubEnv("XDG_DATA_HOME", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   test("環境変数が設定されていない場合はデフォルトパスを返す", () => {
@@ -48,7 +52,7 @@ describe(getMappingFilePath, () => {
 
   test("MAPPING_FILE_PATH が設定されている場合はその値を返す", () => {
     // Arrange
-    process.env["MAPPING_FILE_PATH"] = "/custom/path/mapping.json";
+    vi.stubEnv("MAPPING_FILE_PATH", "/custom/path/mapping.json");
 
     // Act
     const result = getMappingFilePath();
@@ -59,7 +63,7 @@ describe(getMappingFilePath, () => {
 
   test("MAPPING_FILE_PATH が空文字の場合はデフォルトパスを返す", () => {
     // Arrange
-    process.env["MAPPING_FILE_PATH"] = "";
+    vi.stubEnv("MAPPING_FILE_PATH", "");
     const expected = path.join(
       os.homedir(),
       ".local",
@@ -77,7 +81,7 @@ describe(getMappingFilePath, () => {
 
   test("XDG_DATA_HOME が設定されている場合はその値をベースに返す", () => {
     // Arrange
-    process.env["XDG_DATA_HOME"] = "/custom/xdg";
+    vi.stubEnv("XDG_DATA_HOME", "/custom/xdg");
     const expected = path.join("/custom/xdg", "github-to-todoist", "mapping.json");
 
     // Act
@@ -89,8 +93,8 @@ describe(getMappingFilePath, () => {
 
   test("MAPPING_FILE_PATH が設定されている場合は XDG_DATA_HOME より優先される", () => {
     // Arrange
-    process.env["MAPPING_FILE_PATH"] = "/explicit/path.json";
-    process.env["XDG_DATA_HOME"] = "/custom/xdg";
+    vi.stubEnv("MAPPING_FILE_PATH", "/explicit/path.json");
+    vi.stubEnv("XDG_DATA_HOME", "/custom/xdg");
 
     // Act
     const result = getMappingFilePath();

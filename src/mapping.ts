@@ -2,6 +2,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { Mapping, MappingCache } from "./types";
+import { getEnv } from "./env";
 
 const isMappingCache = (value: unknown): value is MappingCache => {
   return (
@@ -13,15 +14,13 @@ const isMappingCache = (value: unknown): value is MappingCache => {
 };
 
 export const getMappingFilePath = (): string => {
+  // const custom = getEnv("MAPPING_FILE_PATH");
   const custom = process.env["MAPPING_FILE_PATH"];
-  if (custom !== undefined && custom !== "") {
+  if (custom !== undefined) {
     return custom;
   }
-  const xdgDataHome = process.env["XDG_DATA_HOME"];
-  const dataDir =
-    xdgDataHome !== undefined && xdgDataHome !== ""
-      ? xdgDataHome
-      : path.join(os.homedir(), ".local", "share");
+  const xdgDataHome = getEnv("XDG_DATA_HOME");
+  const dataDir = xdgDataHome ?? path.join(os.homedir(), ".local", "share");
   return path.join(dataDir, "github-to-todoist", "mapping.json");
 };
 
