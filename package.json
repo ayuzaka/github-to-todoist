@@ -14,8 +14,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "knip": "knip --production",
-    "knip:fix": "knip --production --fix --fix-type exports --fix-type types"
+    "knip": "knip --fix-type exports --fix-type types",
+    "knip:fix": "knip --fix --fix-type exports --fix-type types"
   },
   "dependencies": {
     "@doist/todoist-api-typescript": "^7.1.1",
