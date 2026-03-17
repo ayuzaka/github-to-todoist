@@ -7,6 +7,7 @@ export default defineConfig({
   categories: {
     correctness: "warn",
   },
+  ignorePatterns: ["dist/"],
   plugins: ["eslint", "typescript", "unicorn", "oxc", "import", "promise"],
   rules: {
     // eslint/pedantic
@@ -44,7 +45,7 @@ export default defineConfig({
     // eslint/style
     curly: "error",
     "default-param-last": "error",
-    "func-style": ["error", "declaration", { allowArrowFunctions: true }],
+    "func-style": ["error", "declaration", { allowArrowFunctions: false }],
     "guard-for-in": "error",
     "max-params": "error",
     "no-lone-blocks": "error",

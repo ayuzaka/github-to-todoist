@@ -25,7 +25,7 @@ export type TodoistClient = {
   readonly addLabelToTask: (taskId: string, labelName: string) => Promise<void>;
 };
 
-export const mapTodoistTask = (task: Task): TodoistTask => {
+export function mapTodoistTask(task: Task): TodoistTask {
   return {
     id: task.id,
     content: task.content,
@@ -35,42 +35,47 @@ export const mapTodoistTask = (task: Task): TodoistTask => {
     dueDate: task.due?.date ?? null,
     labels: task.labels,
   };
-};
+}
 
-export const createTodoistClient = (token: string): TodoistClient => {
+export function createTodoistClient(token: string): TodoistClient {
   const api = new TodoistApi(token);
 
-  const fetchAllTasks = async (
+  async function fetchAllTasks(
     projectId: string,
     cursor: string | null,
     accumulated: readonly TodoistTask[],
-  ): Promise<readonly TodoistTask[]> => {
+  ): Promise<readonly TodoistTask[]> {
     const response = await api.getTasks({ projectId, cursor });
     const all = [...accumulated, ...response.results.map(mapTodoistTask)];
     if (response.nextCursor === null) {
       return all;
     }
     return fetchAllTasks(projectId, response.nextCursor, all);
-  };
+  }
 
-  const fetchAllLabelNames = async (
+  async function fetchAllLabelNames(
     cursor: string | null,
     accumulated: readonly string[],
-  ): Promise<readonly string[]> => {
+  ): Promise<readonly string[]> {
     const response = await api.getLabels({ cursor });
-    const all = [...accumulated, ...response.results.map((l) => l.name)];
+    const all = [
+      ...accumulated,
+      ...response.results.map(function (l) {
+        return l.name;
+      }),
+    ];
     if (response.nextCursor === null) {
       return all;
     }
     return fetchAllLabelNames(response.nextCursor, all);
-  };
+  }
 
   return {
-    getProjectTasks: async (projectId) => {
+    getProjectTasks: async function (projectId) {
       return fetchAllTasks(projectId, null, []);
     },
 
-    getTask: async (taskId) => {
+    getTask: async function (taskId) {
       try {
         const task = await api.getTask(taskId);
         return mapTodoistTask(task);
@@ -87,7 +92,7 @@ export const createTodoistClient = (token: string): TodoistClient => {
       }
     },
 
-    createTask: async (projectId, params) => {
+    createTask: async function (projectId, params) {
       const base = { content: params.content, description: params.description, projectId };
       let task;
       if (params.dueDate !== undefined && params.labels !== undefined) {
@@ -102,7 +107,7 @@ export const createTodoistClient = (token: string): TodoistClient => {
       return mapTodoistTask(task);
     },
 
-    updateTask: async (taskId, params) => {
+    updateTask: async function (taskId, params) {
       const { content, dueDate } = params;
       if (dueDate === null && content !== undefined) {
         await api.updateTask(taskId, { content, dueString: null });
@@ -117,15 +122,15 @@ export const createTodoistClient = (token: string): TodoistClient => {
       }
     },
 
-    completeTask: async (taskId) => {
+    completeTask: async function (taskId) {
       await api.closeTask(taskId);
     },
 
-    deleteTask: async (taskId) => {
+    deleteTask: async function (taskId) {
       await api.deleteTask(taskId);
     },
 
-    getOrCreateLabel: async (name) => {
+    getOrCreateLabel: async function (name) {
       const names = await fetchAllLabelNames(null, []);
       if (names.includes(name)) {
         return name;
@@ -134,11 +139,11 @@ export const createTodoistClient = (token: string): TodoistClient => {
       return name;
     },
 
-    addLabelToTask: async (taskId, labelName) => {
+    addLabelToTask: async function (taskId, labelName) {
       const task = await api.getTask(taskId);
       if (!task.labels.includes(labelName)) {
         await api.updateTask(taskId, { labels: [...task.labels, labelName] });
       }
     },
   };
-};
+}

@@ -45,13 +45,15 @@ const config: SyncConfig = {
   todoistProjectId: "proj_001",
 };
 
-const makeEmptyPlan = (): SyncPlan => ({
-  toCreate: [],
-  toUpdate: [],
-  toDelete: [],
-  toComplete: [],
-  toSkip: 0,
-});
+function makeEmptyPlan(): SyncPlan {
+  return {
+    toCreate: [],
+    toUpdate: [],
+    toDelete: [],
+    toComplete: [],
+    toSkip: 0,
+  };
+}
 
 describe(executeSyncPlan, () => {
   let mockGitHub: GitHubClient;

@@ -5,7 +5,7 @@ import { executeSyncPlan } from "./sync-executor";
 import { planSync } from "./sync-planner";
 import { validateEnv } from "./env";
 
-const sync = async (): Promise<void> => {
+async function sync(): Promise<void> {
   const env = validateEnv();
 
   const github = createGitHubClient(env.githubToken);
@@ -45,7 +45,7 @@ const sync = async (): Promise<void> => {
     }
     throw new Error(`Sync completed with ${result.errors.length} errors`);
   }
-};
+}
 
 if (import.meta.url === `file://${process.argv[1] ?? ""}`) {
   await sync();

@@ -8,20 +8,20 @@ import type {
   TodoistTask,
 } from "./types";
 
-export const extractIssueUrlFromDescription = (description: string): string | null => {
+export function extractIssueUrlFromDescription(description: string): string | null {
   const match = /<!-- github-to-todoist: (https?:\/\/[^\s]+) -->/.exec(description);
   return match?.[1] ?? null;
-};
+}
 
-export const buildIssueUrlComment = (issueUrl: string): string => {
+export function buildIssueUrlComment(issueUrl: string): string {
   return `<!-- github-to-todoist: ${issueUrl} -->`;
-};
+}
 
-export const determineSyncDirection = (
+export function determineSyncDirection(
   mapping: Mapping,
   issue: GitHubIssue,
   task: TodoistTask,
-): SyncDirection => {
+): SyncDirection {
   const { last_synced_at } = mapping;
 
   let issueUpdatedAfterSync: boolean;
@@ -54,20 +54,20 @@ export const determineSyncDirection = (
   }
 
   return "skip";
-};
+}
 
-const findTaskByIssueUrl = (
+function findTaskByIssueUrl(
   tasks: readonly TodoistTask[],
   issueUrl: string,
-): TodoistTask | undefined => {
+): TodoistTask | undefined {
   return tasks.find((t) => extractIssueUrlFromDescription(t.description) === issueUrl);
-};
+}
 
-export const planSync = (
+export function planSync(
   issues: readonly GitHubIssue[],
   tasks: readonly TodoistTask[],
   cache: MappingCache,
-): SyncPlan => {
+): SyncPlan {
   const taskById = new Map<string, TodoistTask>(tasks.map((t) => [t.id, t]));
   const mappingByIssueId = new Map<string, Mapping>(
     cache.mappings.map((m) => [m.github_issue_id, m]),
@@ -155,4 +155,4 @@ export const planSync = (
   }
 
   return { toCreate, toUpdate, toDelete, toComplete, toSkip };
-};
+}

@@ -160,11 +160,11 @@ const CLEAR_PROJECT_DATE = `
   }
 `;
 
-const isIssueContent = (content: ProjectItemNode["content"]): content is IssueContent => {
+function isIssueContent(content: ProjectItemNode["content"]): content is IssueContent {
   return content?.__typename === "Issue";
-};
+}
 
-export const extractDueDate = (nodes: readonly FieldValueNode[]): string | null => {
+export function extractDueDate(nodes: readonly FieldValueNode[]): string | null {
   for (const node of nodes) {
     if (
       node.__typename === "ProjectV2ItemFieldDateValue" &&
@@ -175,9 +175,9 @@ export const extractDueDate = (nodes: readonly FieldValueNode[]): string | null 
     }
   }
   return null;
-};
+}
 
-export const mapProjectItem = (node: ProjectItemNode): GitHubIssue | null => {
+export function mapProjectItem(node: ProjectItemNode): GitHubIssue | null {
   if (!isIssueContent(node.content)) {
     return null;
   }
@@ -193,7 +193,7 @@ export const mapProjectItem = (node: ProjectItemNode): GitHubIssue | null => {
     projectItemId: node.id,
     dueDate: extractDueDate(node.fieldValues.nodes),
   };
-};
+}
 
 type FetchParams = {
   readonly owner: string;
@@ -202,12 +202,12 @@ type FetchParams = {
   readonly accumulated: readonly GitHubIssue[];
 };
 
-export const createGitHubClient = (token: string): GitHubClient => {
+export function createGitHubClient(token: string): GitHubClient {
   const exec = graphql.defaults({
     headers: { authorization: `token ${token}` },
   });
 
-  const fetchAllPages = async (params: FetchParams): Promise<readonly GitHubIssue[]> => {
+  async function fetchAllPages(params: FetchParams): Promise<readonly GitHubIssue[]> {
     const { owner, projectNumber, cursor, accumulated } = params;
     const { repositoryOwner } = await exec<ProjectItemsResponse>(GET_PROJECT_ITEMS, {
       owner,
@@ -228,14 +228,14 @@ export const createGitHubClient = (token: string): GitHubClient => {
       cursor: items.pageInfo.endCursor,
       accumulated: all,
     });
-  };
+  }
 
   return {
-    getProjectItems: async (owner, projectNumber) => {
+    getProjectItems: async function (owner, projectNumber) {
       return fetchAllPages({ owner, projectNumber, cursor: null, accumulated: [] });
     },
 
-    getIssue: async (owner, repo, issueNumber) => {
+    getIssue: async function (owner, repo, issueNumber) {
       const { repository } = await exec<GetIssueResponse>(GET_ISSUE, {
         owner,
         repo,
@@ -258,19 +258,19 @@ export const createGitHubClient = (token: string): GitHubClient => {
       };
     },
 
-    updateIssueTitle: async (issueId, title) => {
+    updateIssueTitle: async function (issueId, title) {
       await exec(UPDATE_ISSUE_TITLE, { issueId, title });
     },
 
-    closeIssue: async (issueId) => {
+    closeIssue: async function (issueId) {
       await exec(CLOSE_ISSUE, { issueId });
     },
 
-    reopenIssue: async (issueId) => {
+    reopenIssue: async function (issueId) {
       await exec(REOPEN_ISSUE, { issueId });
     },
 
-    updateProjectItemDate: async ({ projectId, itemId, fieldId, date }) => {
+    updateProjectItemDate: async function ({ projectId, itemId, fieldId, date }) {
       if (date === null) {
         await exec(CLEAR_PROJECT_DATE, { projectId, itemId, fieldId });
       } else {
@@ -278,4 +278,4 @@ export const createGitHubClient = (token: string): GitHubClient => {
       }
     },
   };
-};
+}

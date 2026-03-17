@@ -26,10 +26,10 @@ type MutableResult = {
   errors: string[];
 };
 
-export const executeSyncPlan = async (
+export async function executeSyncPlan(
   plan: SyncPlan,
   params: ExecuteSyncPlanParams,
-): Promise<{ result: SyncResult; updatedCache: MappingCache }> => {
+): Promise<{ result: SyncResult; updatedCache: MappingCache }> {
   const { github, todoist, cache, config } = params;
   const r: MutableResult = {
     created: 0,
@@ -42,7 +42,7 @@ export const executeSyncPlan = async (
   let mappings = [...cache.mappings];
 
   const createResults = await Promise.allSettled(
-    plan.toCreate.map(async (issue) => {
+    plan.toCreate.map(async function (issue) {
       const issueUrl = `https://github.com/${issue.repository}/issues/${issue.number}`;
       const description = buildIssueUrlComment(issueUrl);
       const labelName = await todoist.getOrCreateLabel(issue.repository);
@@ -83,7 +83,7 @@ export const executeSyncPlan = async (
   }
 
   const deleteResults = await Promise.allSettled(
-    plan.toDelete.map(async (mapping) => {
+    plan.toDelete.map(async function (mapping) {
       await todoist.deleteTask(mapping.todoist_task_id);
       return mapping.github_issue_id;
     }),
@@ -170,4 +170,4 @@ export const executeSyncPlan = async (
     },
     updatedCache: { mappings },
   };
-};
+}
