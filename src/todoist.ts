@@ -1,14 +1,14 @@
 import type { Task, TodoistApi } from "@doist/todoist-api-typescript";
 import type { TodoistTask } from "./types";
 
-export type CreateTaskParams = {
+type CreateTaskParams = {
   readonly content: string;
   readonly description: string;
   readonly dueDate?: string;
   readonly labels?: readonly string[];
 };
 
-export type UpdateTaskParams = {
+type UpdateTaskParams = {
   readonly content?: string;
   readonly dueDate?: string | null;
 };

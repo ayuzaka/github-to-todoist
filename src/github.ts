@@ -3,7 +3,7 @@ import { graphql } from "@octokit/graphql";
 
 export type GitHubExec = typeof graphql;
 
-export type UpdateProjectItemDateParams = {
+type UpdateProjectItemDateParams = {
   readonly projectId: string;
   readonly itemId: string;
   readonly fieldId: string;
