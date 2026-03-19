@@ -14,8 +14,7 @@ function isMappingCache(value: unknown): value is MappingCache {
 }
 
 export function getMappingFilePath(): string {
-  // const custom = getEnv("MAPPING_FILE_PATH");
-  const custom = process.env["MAPPING_FILE_PATH"];
+  const custom = getEnv("MAPPING_FILE_PATH");
   if (custom !== undefined) {
     return custom;
   }
