@@ -1,27 +1,13 @@
 import type { GitHubIssue } from "./types";
 import { graphql } from "@octokit/graphql";
 
+export type GitHubExec = typeof graphql;
+
 export type UpdateProjectItemDateParams = {
   readonly projectId: string;
   readonly itemId: string;
   readonly fieldId: string;
   readonly date: string | null;
-};
-
-export type GitHubClient = {
-  readonly getProjectItems: (
-    owner: string,
-    projectNumber: number,
-  ) => Promise<readonly GitHubIssue[]>;
-  readonly getIssue: (
-    owner: string,
-    repo: string,
-    issueNumber: number,
-  ) => Promise<GitHubIssue | null>;
-  readonly updateIssueTitle: (issueId: string, title: string) => Promise<void>;
-  readonly closeIssue: (issueId: string) => Promise<void>;
-  readonly reopenIssue: (issueId: string) => Promise<void>;
-  readonly updateProjectItemDate: (params: UpdateProjectItemDateParams) => Promise<void>;
 };
 
 type FieldValueNode = {
@@ -64,12 +50,6 @@ type ProjectItemsResponse = {
   };
 };
 
-type GetIssueResponse = {
-  readonly repository: {
-    readonly issue: IssueContent | null;
-  };
-};
-
 const GET_PROJECT_ITEMS = `
   query GetProjectItems($owner: String!, $projectNumber: Int!, $cursor: String) {
     repositoryOwner(login: $owner) {
@@ -100,17 +80,6 @@ const GET_PROJECT_ITEMS = `
   }
 `;
 
-const GET_ISSUE = `
-  query GetIssue($owner: String!, $repo: String!, $number: Int!) {
-    repository(owner: $owner, name: $repo) {
-      issue(number: $number) {
-        id number title state updatedAt createdAt
-        repository { nameWithOwner }
-      }
-    }
-  }
-`;
-
 const UPDATE_ISSUE_TITLE = `
   mutation UpdateIssueTitle($issueId: ID!, $title: String!) {
     updateIssue(input: { id: $issueId, title: $title }) {
@@ -122,14 +91,6 @@ const UPDATE_ISSUE_TITLE = `
 const CLOSE_ISSUE = `
   mutation CloseIssue($issueId: ID!) {
     closeIssue(input: { issueId: $issueId }) {
-      issue { id }
-    }
-  }
-`;
-
-const REOPEN_ISSUE = `
-  mutation ReopenIssue($issueId: ID!) {
-    reopenIssue(input: { issueId: $issueId }) {
       issue { id }
     }
   }
@@ -196,86 +157,70 @@ export function mapProjectItem(node: ProjectItemNode): GitHubIssue | null {
 }
 
 type FetchParams = {
+  readonly exec: GitHubExec;
   readonly owner: string;
   readonly projectNumber: number;
   readonly cursor: string | null;
   readonly accumulated: readonly GitHubIssue[];
 };
 
-export function createGitHubClient(token: string): GitHubClient {
-  const exec = graphql.defaults({
+async function fetchAllPages(params: FetchParams): Promise<readonly GitHubIssue[]> {
+  const { exec, owner, projectNumber, cursor, accumulated } = params;
+  const { repositoryOwner } = await exec<ProjectItemsResponse>(GET_PROJECT_ITEMS, {
+    owner,
+    projectNumber,
+    cursor,
+  });
+  const { items } = repositoryOwner.projectV2;
+  const current = items.nodes
+    .map(mapProjectItem)
+    .filter((item): item is GitHubIssue => item !== null);
+  const all = [...accumulated, ...current];
+  if (!items.pageInfo.hasNextPage) {
+    return all;
+  }
+  return fetchAllPages({
+    exec,
+    owner,
+    projectNumber,
+    cursor: items.pageInfo.endCursor,
+    accumulated: all,
+  });
+}
+
+export function createGitHubExec(token: string): GitHubExec {
+  return graphql.defaults({
     headers: { authorization: `token ${token}` },
   });
+}
 
-  async function fetchAllPages(params: FetchParams): Promise<readonly GitHubIssue[]> {
-    const { owner, projectNumber, cursor, accumulated } = params;
-    const { repositoryOwner } = await exec<ProjectItemsResponse>(GET_PROJECT_ITEMS, {
-      owner,
-      projectNumber,
-      cursor,
-    });
-    const { items } = repositoryOwner.projectV2;
-    const current = items.nodes
-      .map(mapProjectItem)
-      .filter((item): item is GitHubIssue => item !== null);
-    const all = [...accumulated, ...current];
-    if (!items.pageInfo.hasNextPage) {
-      return all;
-    }
-    return fetchAllPages({
-      owner,
-      projectNumber,
-      cursor: items.pageInfo.endCursor,
-      accumulated: all,
-    });
+export async function getProjectItems(
+  exec: GitHubExec,
+  owner: string,
+  projectNumber: number,
+): Promise<readonly GitHubIssue[]> {
+  return fetchAllPages({ exec, owner, projectNumber, cursor: null, accumulated: [] });
+}
+
+export async function updateIssueTitle(
+  exec: GitHubExec,
+  issueId: string,
+  title: string,
+): Promise<void> {
+  await exec(UPDATE_ISSUE_TITLE, { issueId, title });
+}
+
+export async function closeIssue(exec: GitHubExec, issueId: string): Promise<void> {
+  await exec(CLOSE_ISSUE, { issueId });
+}
+
+export async function updateProjectItemDate(
+  exec: GitHubExec,
+  { projectId, itemId, fieldId, date }: UpdateProjectItemDateParams,
+): Promise<void> {
+  if (date === null) {
+    await exec(CLEAR_PROJECT_DATE, { projectId, itemId, fieldId });
+  } else {
+    await exec(UPDATE_PROJECT_DATE, { projectId, itemId, fieldId, date });
   }
-
-  return {
-    getProjectItems: async function (owner, projectNumber) {
-      return fetchAllPages({ owner, projectNumber, cursor: null, accumulated: [] });
-    },
-
-    getIssue: async function (owner, repo, issueNumber) {
-      const { repository } = await exec<GetIssueResponse>(GET_ISSUE, {
-        owner,
-        repo,
-        number: issueNumber,
-      });
-      const { issue } = repository;
-      if (issue === null) {
-        return null;
-      }
-      return {
-        id: issue.id,
-        number: issue.number,
-        title: issue.title,
-        state: issue.state === "OPEN" ? "OPEN" : "CLOSED",
-        updatedAt: issue.updatedAt,
-        createdAt: issue.createdAt,
-        repository: issue.repository.nameWithOwner,
-        projectItemId: null,
-        dueDate: null,
-      };
-    },
-
-    updateIssueTitle: async function (issueId, title) {
-      await exec(UPDATE_ISSUE_TITLE, { issueId, title });
-    },
-
-    closeIssue: async function (issueId) {
-      await exec(CLOSE_ISSUE, { issueId });
-    },
-
-    reopenIssue: async function (issueId) {
-      await exec(REOPEN_ISSUE, { issueId });
-    },
-
-    updateProjectItemDate: async function ({ projectId, itemId, fieldId, date }) {
-      if (date === null) {
-        await exec(CLEAR_PROJECT_DATE, { projectId, itemId, fieldId });
-      } else {
-        await exec(UPDATE_PROJECT_DATE, { projectId, itemId, fieldId, date });
-      }
-    },
-  };
 }

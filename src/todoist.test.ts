@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { createTodoistClient, mapTodoistTask } from "./todoist";
+import { getTask, mapTodoistTask } from "./todoist";
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import type { TodoistTask } from "./types";
 
@@ -33,7 +33,7 @@ const baseSdkTask: Task = {
   url: "https://todoist.com/app/task/task_1",
 };
 
-describe("getTask", () => {
+describe(getTask, () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -42,10 +42,10 @@ describe("getTask", () => {
     // Arrange
     const error = Object.assign(new Error("Not Found"), { httpStatusCode: 404 });
     vi.spyOn(TodoistApi.prototype, "getTask").mockRejectedValue(error);
-    const client = createTodoistClient("token");
+    const api = new TodoistApi("token");
 
     // Act
-    const result = await client.getTask("task_1");
+    const result = await getTask(api, "task_1");
 
     // Assert
     expect(result).toBeNull();
@@ -55,10 +55,10 @@ describe("getTask", () => {
     // Arrange
     const error = Object.assign(new Error("Unauthorized"), { httpStatusCode: 401 });
     vi.spyOn(TodoistApi.prototype, "getTask").mockRejectedValue(error);
-    const client = createTodoistClient("token");
+    const api = new TodoistApi("token");
 
     // Act & Assert
-    await expect(client.getTask("task_1")).rejects.toThrow("Unauthorized");
+    await expect(getTask(api, "task_1")).rejects.toThrow("Unauthorized");
   });
 });
 

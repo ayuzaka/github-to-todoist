@@ -1,21 +1,22 @@
+import { createGitHubExec, getProjectItems } from "./github";
 import { getMappingFilePath, loadMappingCache, saveMappingCache } from "./mapping";
-import { createGitHubClient } from "./github";
-import { createTodoistClient } from "./todoist";
+import { TodoistApi } from "@doist/todoist-api-typescript";
 import { executeSyncPlan } from "./sync-executor";
+import { getProjectTasks } from "./todoist";
 import { planSync } from "./sync-planner";
 import { validateEnv } from "./env";
 
 async function sync(): Promise<void> {
   const env = validateEnv();
 
-  const github = createGitHubClient(env.githubToken);
-  const todoist = createTodoistClient(env.todoistToken);
+  const github = createGitHubExec(env.githubToken);
+  const todoist = new TodoistApi(env.todoistToken);
   const filePath = getMappingFilePath();
   const cache = await loadMappingCache(filePath);
 
   const [issues, tasks] = await Promise.all([
-    github.getProjectItems(env.githubProjectOwner, env.githubProjectNumber),
-    todoist.getProjectTasks(env.todoistProjectId),
+    getProjectItems(github, env.githubProjectOwner, env.githubProjectNumber),
+    getProjectTasks(todoist, env.todoistProjectId),
   ]);
 
   const plan = planSync(issues, tasks, cache);

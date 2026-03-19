@@ -1,9 +1,15 @@
+import * as githubOps from "./github";
+import * as todoistOps from "./todoist";
 import type { GitHubIssue, Mapping, MappingCache, SyncPlan, TodoistTask } from "./types";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { GitHubClient } from "./github";
+import type { GitHubExec } from "./github";
 import type { SyncConfig } from "./sync-executor";
-import type { TodoistClient } from "./todoist";
+import { TodoistApi } from "@doist/todoist-api-typescript";
 import { executeSyncPlan } from "./sync-executor";
+import { graphql } from "@octokit/graphql";
+
+vi.mock(import("./todoist"));
+vi.mock(import("./github"));
 
 const baseIssue: GitHubIssue = {
   id: "I_001",
@@ -55,35 +61,26 @@ function makeEmptyPlan(): SyncPlan {
   };
 }
 
-describe(executeSyncPlan, () => {
-  let mockGitHub: GitHubClient;
-  let mockTodoist: TodoistClient;
+const mockTodoist = new TodoistApi("mock-token");
+const mockGitHub: GitHubExec = graphql.defaults({ headers: {} });
 
+describe(executeSyncPlan, () => {
   beforeEach(() => {
-    mockGitHub = {
-      getProjectItems: vi.fn(),
-      getIssue: vi.fn(),
-      updateIssueTitle: vi.fn<GitHubClient["updateIssueTitle"]>().mockResolvedValue(),
-      closeIssue: vi.fn<GitHubClient["closeIssue"]>().mockResolvedValue(),
-      reopenIssue: vi.fn<GitHubClient["reopenIssue"]>().mockResolvedValue(),
-      updateProjectItemDate: vi.fn<GitHubClient["updateProjectItemDate"]>().mockResolvedValue(),
-    };
-    mockTodoist = {
-      getProjectTasks: vi.fn(),
-      getTask: vi.fn(),
-      createTask: vi.fn<TodoistClient["createTask"]>().mockResolvedValue(baseTask),
-      updateTask: vi.fn<TodoistClient["updateTask"]>().mockResolvedValue(),
-      completeTask: vi.fn<TodoistClient["completeTask"]>().mockResolvedValue(),
-      deleteTask: vi.fn<TodoistClient["deleteTask"]>().mockResolvedValue(),
-      getOrCreateLabel: vi.fn<TodoistClient["getOrCreateLabel"]>().mockResolvedValue("owner/repo"),
-      addLabelToTask: vi.fn<TodoistClient["addLabelToTask"]>().mockResolvedValue(),
-    };
+    vi.mocked(todoistOps.getOrCreateLabel).mockResolvedValue("owner/repo");
+    vi.mocked(todoistOps.createTask).mockResolvedValue(baseTask);
+    vi.mocked(todoistOps.addLabelToTask).mockResolvedValue();
+    vi.mocked(todoistOps.updateTask).mockResolvedValue();
+    vi.mocked(todoistOps.completeTask).mockResolvedValue();
+    vi.mocked(todoistOps.deleteTask).mockResolvedValue();
+    vi.mocked(githubOps.updateIssueTitle).mockResolvedValue();
+    vi.mocked(githubOps.closeIssue).mockResolvedValue();
+    vi.mocked(githubOps.updateProjectItemDate).mockResolvedValue();
   });
 
   test("toCreate: Todoist タスクを作成してキャッシュに追加する", async () => {
     // Arrange
     const newTask: TodoistTask = { ...baseTask, id: "task_new" };
-    vi.mocked(mockTodoist.createTask).mockResolvedValue(newTask);
+    vi.mocked(todoistOps.createTask).mockResolvedValue(newTask);
     const plan: SyncPlan = { ...makeEmptyPlan(), toCreate: [baseIssue] };
 
     // Act
@@ -117,7 +114,10 @@ describe(executeSyncPlan, () => {
     // Assert
     expect(result.deleted).toBe(1);
     expect(updatedCache.mappings).toHaveLength(0);
-    expect(vi.mocked(mockTodoist.deleteTask)).toHaveBeenCalledWith(baseMapping.todoist_task_id);
+    expect(vi.mocked(todoistOps.deleteTask)).toHaveBeenCalledWith(
+      mockTodoist,
+      baseMapping.todoist_task_id,
+    );
   });
 
   test("toComplete: Todoist タスクを完了してキャッシュから除去する", async () => {
@@ -136,7 +136,10 @@ describe(executeSyncPlan, () => {
     // Assert
     expect(result.deleted).toBe(1);
     expect(updatedCache.mappings).toHaveLength(0);
-    expect(vi.mocked(mockTodoist.completeTask)).toHaveBeenCalledWith(baseMapping.todoist_task_id);
+    expect(vi.mocked(todoistOps.completeTask)).toHaveBeenCalledWith(
+      mockTodoist,
+      baseMapping.todoist_task_id,
+    );
   });
 
   test("toUpdate github-to-todoist: Todoist タスクのタイトルと期日を更新する", async () => {
@@ -159,7 +162,7 @@ describe(executeSyncPlan, () => {
 
     // Assert
     expect(result.updated).toBe(1);
-    expect(vi.mocked(mockTodoist.updateTask)).toHaveBeenCalledWith(baseTask.id, {
+    expect(vi.mocked(todoistOps.updateTask)).toHaveBeenCalledWith(mockTodoist, baseTask.id, {
       content: baseIssue.title,
       dueDate: baseIssue.dueDate,
     });
@@ -186,7 +189,8 @@ describe(executeSyncPlan, () => {
 
     // Assert
     expect(result.updated).toBe(1);
-    expect(vi.mocked(mockGitHub.updateIssueTitle)).toHaveBeenCalledWith(
+    expect(vi.mocked(githubOps.updateIssueTitle)).toHaveBeenCalledWith(
+      mockGitHub,
       baseIssue.id,
       baseTask.content,
     );
@@ -217,12 +221,12 @@ describe(executeSyncPlan, () => {
     });
 
     // Assert
-    expect(vi.mocked(mockGitHub.closeIssue)).toHaveBeenCalledWith(baseIssue.id);
+    expect(vi.mocked(githubOps.closeIssue)).toHaveBeenCalledWith(mockGitHub, baseIssue.id);
   });
 
   test("エラー発生時は errors に記録して処理を続行する", async () => {
     // Arrange
-    vi.mocked(mockTodoist.createTask).mockRejectedValue(new Error("API error"));
+    vi.mocked(todoistOps.createTask).mockRejectedValue(new Error("API error"));
     const plan: SyncPlan = { ...makeEmptyPlan(), toCreate: [baseIssue] };
 
     // Act

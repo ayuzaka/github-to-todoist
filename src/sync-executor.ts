@@ -1,6 +1,15 @@
 import type { Mapping, MappingCache, SyncPlan, SyncResult } from "./types";
-import type { GitHubClient } from "./github";
-import type { TodoistClient } from "./todoist";
+import {
+  addLabelToTask,
+  completeTask,
+  createTask,
+  deleteTask,
+  getOrCreateLabel,
+  updateTask,
+} from "./todoist";
+import { closeIssue, updateIssueTitle, updateProjectItemDate } from "./github";
+import type { GitHubExec } from "./github";
+import type { TodoistApi } from "@doist/todoist-api-typescript";
 import { buildIssueUrlComment } from "./sync-planner";
 
 export type SyncConfig = {
@@ -12,8 +21,8 @@ export type SyncConfig = {
 };
 
 type ExecuteSyncPlanParams = {
-  readonly github: GitHubClient;
-  readonly todoist: TodoistClient;
+  readonly github: GitHubExec;
+  readonly todoist: TodoistApi;
   readonly cache: MappingCache;
   readonly config: SyncConfig;
 };
@@ -45,23 +54,23 @@ export async function executeSyncPlan(
     plan.toCreate.map(async function (issue) {
       const issueUrl = `https://github.com/${issue.repository}/issues/${issue.number}`;
       const description = buildIssueUrlComment(issueUrl);
-      const labelName = await todoist.getOrCreateLabel(issue.repository);
+      const labelName = await getOrCreateLabel(todoist, issue.repository);
       let task;
       if (issue.dueDate !== null) {
-        task = await todoist.createTask(config.todoistProjectId, {
+        task = await createTask(todoist, config.todoistProjectId, {
           content: issue.title,
           description,
           dueDate: issue.dueDate,
           labels: [labelName],
         });
       } else {
-        task = await todoist.createTask(config.todoistProjectId, {
+        task = await createTask(todoist, config.todoistProjectId, {
           content: issue.title,
           description,
           labels: [labelName],
         });
       }
-      await todoist.addLabelToTask(task.id, labelName);
+      await addLabelToTask(todoist, task.id, labelName);
       const newMapping: Mapping = {
         github_issue_id: issue.id,
         github_issue_number: issue.number,
@@ -84,7 +93,7 @@ export async function executeSyncPlan(
 
   const deleteResults = await Promise.allSettled(
     plan.toDelete.map(async function (mapping) {
-      await todoist.deleteTask(mapping.todoist_task_id);
+      await deleteTask(todoist, mapping.todoist_task_id);
       return mapping.github_issue_id;
     }),
   );
@@ -100,7 +109,7 @@ export async function executeSyncPlan(
 
   const completeResults = await Promise.allSettled(
     plan.toComplete.map(async (mapping) => {
-      await todoist.completeTask(mapping.todoist_task_id);
+      await completeTask(todoist, mapping.todoist_task_id);
       return mapping.github_issue_id;
     }),
   );
@@ -118,14 +127,14 @@ export async function executeSyncPlan(
     plan.toUpdate.map(async (entry) => {
       const { mapping, issue, task, direction } = entry;
       if (direction === "github-to-todoist") {
-        await todoist.updateTask(task.id, {
+        await updateTask(todoist, task.id, {
           content: issue.title,
           dueDate: issue.dueDate,
         });
       } else {
-        await github.updateIssueTitle(issue.id, task.content);
+        await updateIssueTitle(github, issue.id, task.content);
         if (task.isCompleted) {
-          await github.closeIssue(issue.id);
+          await closeIssue(github, issue.id);
         }
         const { githubProjectId, githubDateFieldId } = config;
         if (
@@ -133,7 +142,7 @@ export async function executeSyncPlan(
           githubProjectId !== undefined &&
           githubDateFieldId !== undefined
         ) {
-          await github.updateProjectItemDate({
+          await updateProjectItemDate(github, {
             projectId: githubProjectId,
             itemId: issue.projectItemId,
             fieldId: githubDateFieldId,

@@ -1,5 +1,4 @@
-import type { Task } from "@doist/todoist-api-typescript";
-import { TodoistApi } from "@doist/todoist-api-typescript";
+import type { Task, TodoistApi } from "@doist/todoist-api-typescript";
 import type { TodoistTask } from "./types";
 
 export type CreateTaskParams = {
@@ -14,17 +13,6 @@ export type UpdateTaskParams = {
   readonly dueDate?: string | null;
 };
 
-export type TodoistClient = {
-  readonly getProjectTasks: (projectId: string) => Promise<readonly TodoistTask[]>;
-  readonly getTask: (taskId: string) => Promise<TodoistTask | null>;
-  readonly createTask: (projectId: string, params: CreateTaskParams) => Promise<TodoistTask>;
-  readonly updateTask: (taskId: string, params: UpdateTaskParams) => Promise<void>;
-  readonly completeTask: (taskId: string) => Promise<void>;
-  readonly deleteTask: (taskId: string) => Promise<void>;
-  readonly getOrCreateLabel: (name: string) => Promise<string>;
-  readonly addLabelToTask: (taskId: string, labelName: string) => Promise<void>;
-};
-
 export function mapTodoistTask(task: Task): TodoistTask {
   return {
     id: task.id,
@@ -37,113 +25,127 @@ export function mapTodoistTask(task: Task): TodoistTask {
   };
 }
 
-export function createTodoistClient(token: string): TodoistClient {
-  const api = new TodoistApi(token);
+type FetchAllTasksParams = {
+  readonly api: TodoistApi;
+  readonly projectId: string;
+  readonly cursor: string | null;
+  readonly accumulated: readonly TodoistTask[];
+};
 
-  async function fetchAllTasks(
-    projectId: string,
-    cursor: string | null,
-    accumulated: readonly TodoistTask[],
-  ): Promise<readonly TodoistTask[]> {
-    const response = await api.getTasks({ projectId, cursor });
-    const all = [...accumulated, ...response.results.map(mapTodoistTask)];
-    if (response.nextCursor === null) {
-      return all;
-    }
-    return fetchAllTasks(projectId, response.nextCursor, all);
+async function fetchAllTasks(params: FetchAllTasksParams): Promise<readonly TodoistTask[]> {
+  const { api, projectId, cursor, accumulated } = params;
+  const response = await api.getTasks({ projectId, cursor });
+  const all = [...accumulated, ...response.results.map(mapTodoistTask)];
+  if (response.nextCursor === null) {
+    return all;
   }
+  return fetchAllTasks({ api, projectId, cursor: response.nextCursor, accumulated: all });
+}
 
-  async function fetchAllLabelNames(
-    cursor: string | null,
-    accumulated: readonly string[],
-  ): Promise<readonly string[]> {
-    const response = await api.getLabels({ cursor });
-    const all = [
-      ...accumulated,
-      ...response.results.map(function (l) {
-        return l.name;
-      }),
-    ];
-    if (response.nextCursor === null) {
-      return all;
-    }
-    return fetchAllLabelNames(response.nextCursor, all);
+async function fetchAllLabelNames(
+  api: TodoistApi,
+  cursor: string | null,
+  accumulated: readonly string[],
+): Promise<readonly string[]> {
+  const response = await api.getLabels({ cursor });
+  const all = [
+    ...accumulated,
+    ...response.results.map(function (l) {
+      return l.name;
+    }),
+  ];
+  if (response.nextCursor === null) {
+    return all;
   }
+  return fetchAllLabelNames(api, response.nextCursor, all);
+}
 
-  return {
-    getProjectTasks: async function (projectId) {
-      return fetchAllTasks(projectId, null, []);
-    },
+export async function getProjectTasks(
+  api: TodoistApi,
+  projectId: string,
+): Promise<readonly TodoistTask[]> {
+  return fetchAllTasks({ api, projectId, cursor: null, accumulated: [] });
+}
 
-    getTask: async function (taskId) {
-      try {
-        const task = await api.getTask(taskId);
-        return mapTodoistTask(task);
-      } catch (error) {
-        if (
-          typeof error === "object" &&
-          error !== null &&
-          "httpStatusCode" in error &&
-          error.httpStatusCode === 404
-        ) {
-          return null;
-        }
-        throw error;
-      }
-    },
+export async function getTask(api: TodoistApi, taskId: string): Promise<TodoistTask | null> {
+  try {
+    const task = await api.getTask(taskId);
+    return mapTodoistTask(task);
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "httpStatusCode" in error &&
+      error.httpStatusCode === 404
+    ) {
+      return null;
+    }
+    throw error;
+  }
+}
 
-    createTask: async function (projectId, params) {
-      const base = { content: params.content, description: params.description, projectId };
-      let task;
-      if (params.dueDate !== undefined && params.labels !== undefined) {
-        task = await api.addTask({ ...base, dueDate: params.dueDate, labels: [...params.labels] });
-      } else if (params.dueDate !== undefined) {
-        task = await api.addTask({ ...base, dueDate: params.dueDate });
-      } else if (params.labels !== undefined) {
-        task = await api.addTask({ ...base, labels: [...params.labels] });
-      } else {
-        task = await api.addTask(base);
-      }
-      return mapTodoistTask(task);
-    },
+export async function createTask(
+  api: TodoistApi,
+  projectId: string,
+  params: CreateTaskParams,
+): Promise<TodoistTask> {
+  const base = { content: params.content, description: params.description, projectId };
+  let task;
+  if (params.dueDate !== undefined && params.labels !== undefined) {
+    task = await api.addTask({ ...base, dueDate: params.dueDate, labels: [...params.labels] });
+  } else if (params.dueDate !== undefined) {
+    task = await api.addTask({ ...base, dueDate: params.dueDate });
+  } else if (params.labels !== undefined) {
+    task = await api.addTask({ ...base, labels: [...params.labels] });
+  } else {
+    task = await api.addTask(base);
+  }
+  return mapTodoistTask(task);
+}
 
-    updateTask: async function (taskId, params) {
-      const { content, dueDate } = params;
-      if (dueDate === null && content !== undefined) {
-        await api.updateTask(taskId, { content, dueString: null });
-      } else if (dueDate === null) {
-        await api.updateTask(taskId, { dueString: null });
-      } else if (dueDate !== undefined && content !== undefined) {
-        await api.updateTask(taskId, { content, dueDate });
-      } else if (dueDate !== undefined) {
-        await api.updateTask(taskId, { dueDate });
-      } else if (content !== undefined) {
-        await api.updateTask(taskId, { content });
-      }
-    },
+export async function updateTask(
+  api: TodoistApi,
+  taskId: string,
+  params: UpdateTaskParams,
+): Promise<void> {
+  const { content, dueDate } = params;
+  if (dueDate === null && content !== undefined) {
+    await api.updateTask(taskId, { content, dueString: null });
+  } else if (dueDate === null) {
+    await api.updateTask(taskId, { dueString: null });
+  } else if (dueDate !== undefined && content !== undefined) {
+    await api.updateTask(taskId, { content, dueDate });
+  } else if (dueDate !== undefined) {
+    await api.updateTask(taskId, { dueDate });
+  } else if (content !== undefined) {
+    await api.updateTask(taskId, { content });
+  }
+}
 
-    completeTask: async function (taskId) {
-      await api.closeTask(taskId);
-    },
+export async function completeTask(api: TodoistApi, taskId: string): Promise<void> {
+  await api.closeTask(taskId);
+}
 
-    deleteTask: async function (taskId) {
-      await api.deleteTask(taskId);
-    },
+export async function deleteTask(api: TodoistApi, taskId: string): Promise<void> {
+  await api.deleteTask(taskId);
+}
 
-    getOrCreateLabel: async function (name) {
-      const names = await fetchAllLabelNames(null, []);
-      if (names.includes(name)) {
-        return name;
-      }
-      await api.addLabel({ name });
-      return name;
-    },
+export async function getOrCreateLabel(api: TodoistApi, name: string): Promise<string> {
+  const names = await fetchAllLabelNames(api, null, []);
+  if (names.includes(name)) {
+    return name;
+  }
+  await api.addLabel({ name });
+  return name;
+}
 
-    addLabelToTask: async function (taskId, labelName) {
-      const task = await api.getTask(taskId);
-      if (!task.labels.includes(labelName)) {
-        await api.updateTask(taskId, { labels: [...task.labels, labelName] });
-      }
-    },
-  };
+export async function addLabelToTask(
+  api: TodoistApi,
+  taskId: string,
+  labelName: string,
+): Promise<void> {
+  const task = await api.getTask(taskId);
+  if (!task.labels.includes(labelName)) {
+    await api.updateTask(taskId, { labels: [...task.labels, labelName] });
+  }
 }
