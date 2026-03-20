@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import { extractDueDate, mapProjectItem } from "./github";
-import type { GitHubIssue } from "./types";
 import type { ProjectItemNode } from "./github";
 
 const baseIssueContent = {
@@ -59,7 +58,7 @@ describe(mapProjectItem, () => {
   test("Issue コンテンツを GitHubIssue にマップする", () => {
     // Arrange
     const node: ProjectItemNode = {
-      id: "PVTI_xxx",
+      id: "PROJECT_ID_1",
       content: baseIssueContent,
       fieldValues: {
         nodes: [
@@ -71,7 +70,12 @@ describe(mapProjectItem, () => {
         ],
       },
     };
-    const expected: GitHubIssue = {
+
+    // Act
+    const result = mapProjectItem(node);
+
+    // Assert
+    expect(result).toStrictEqual({
       id: "I_xxx",
       number: 1,
       title: "Test Issue",
@@ -79,21 +83,15 @@ describe(mapProjectItem, () => {
       updatedAt: "2026-03-13T00:00:00Z",
       createdAt: "2026-03-01T00:00:00Z",
       repository: "owner/repo",
-      projectItemId: "PVTI_xxx",
+      projectItemId: "PROJECT_ID_1",
       dueDate: "2026-04-01",
-    };
-
-    // Act
-    const result = mapProjectItem(node);
-
-    // Assert
-    expect(result).toStrictEqual(expected);
+    });
   });
 
   test("Issue でないコンテンツは null を返す", () => {
     // Arrange
     const node: ProjectItemNode = {
-      id: "PVTI_draft",
+      id: "PJT_draft",
       content: { __typename: "DraftIssue" },
       fieldValues: { nodes: [] },
     };
@@ -108,7 +106,7 @@ describe(mapProjectItem, () => {
   test("content が null の場合は null を返す", () => {
     // Arrange
     const node: ProjectItemNode = {
-      id: "PVTI_null",
+      id: "PJT_null",
       content: null,
       fieldValues: { nodes: [] },
     };
@@ -123,7 +121,7 @@ describe(mapProjectItem, () => {
   test("CLOSED 状態の Issue を正しくマップする", () => {
     // Arrange
     const node: ProjectItemNode = {
-      id: "PVTI_closed",
+      id: "PJT_closed",
       content: { ...baseIssueContent, state: "CLOSED" },
       fieldValues: { nodes: [] },
     };
@@ -138,7 +136,7 @@ describe(mapProjectItem, () => {
   test("Date フィールドなしの場合 dueDate は null", () => {
     // Arrange
     const node: ProjectItemNode = {
-      id: "PVTI_nodate",
+      id: "PJT_nodate",
       content: baseIssueContent,
       fieldValues: { nodes: [] },
     };

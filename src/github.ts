@@ -135,14 +135,17 @@ export function extractDueDate(nodes: readonly FieldValueNode[]): string | null 
       return node.date;
     }
   }
+
   return null;
 }
 
 export function mapProjectItem(node: ProjectItemNode): GitHubIssue | null {
-  if (!isIssueContent(node.content)) {
+  const { content } = node;
+
+  if (!isIssueContent(content)) {
     return null;
   }
-  const { content } = node;
+
   return {
     id: content.id,
     number: content.number,
@@ -172,13 +175,12 @@ async function fetchAllPages(params: FetchParams): Promise<readonly GitHubIssue[
     cursor,
   });
   const { items } = repositoryOwner.projectV2;
-  const current = items.nodes
-    .map(mapProjectItem)
-    .filter((item): item is GitHubIssue => item !== null);
+  const current = items.nodes.map(mapProjectItem).filter((item) => item !== null);
   const all = [...accumulated, ...current];
   if (!items.pageInfo.hasNextPage) {
     return all;
   }
+
   return fetchAllPages({
     exec,
     owner,

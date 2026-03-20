@@ -22,7 +22,7 @@ const baseIssue: GitHubIssue = {
   updatedAt: "2026-03-13T00:00:00Z",
   createdAt: "2026-03-01T00:00:00Z",
   repository: "owner/repo",
-  projectItemId: "PVTI_001",
+  projectItemId: "Project_001",
   dueDate: null,
 };
 
@@ -43,8 +43,6 @@ const baseMapping: Mapping = {
   todoist_task_id: "task_001",
   last_synced_at: "2026-03-12T00:00:00Z",
 };
-
-const emptyCache: MappingCache = { mappings: [] };
 
 describe(extractIssueUrlFromDescription, () => {
   test("有効なコメントから URL を抽出する", () => {
@@ -201,7 +199,7 @@ describe(planSync, () => {
     const tasks: readonly TodoistTask[] = [];
 
     // Act
-    const result = planSync(issues, tasks, emptyCache);
+    const result = planSync(issues, tasks, { mappings: [] });
 
     // Assert
     expect(result.toCreate).toStrictEqual([baseIssue]);
@@ -288,7 +286,7 @@ describe(planSync, () => {
     const tasks: readonly TodoistTask[] = [baseTask];
 
     // Act
-    const result = planSync(issues, tasks, emptyCache);
+    const result = planSync(issues, tasks, { mappings: [] });
 
     // Assert
     expect(result.toUpdate).toHaveLength(1);
