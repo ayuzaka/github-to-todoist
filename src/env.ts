@@ -4,8 +4,6 @@ type AppEnv = {
   readonly githubProjectOwner: string;
   readonly todoistToken: string;
   readonly todoistProjectId: string;
-  readonly githubProjectId: string | undefined;
-  readonly githubDateFieldId: string | undefined;
 };
 
 export function getEnv(key: string): string | undefined {
@@ -40,7 +38,5 @@ export function validateEnv(): AppEnv {
     githubProjectOwner,
     todoistToken,
     todoistProjectId,
-    githubProjectId: getEnv("GITHUB_PROJECT_ID"),
-    githubDateFieldId: getEnv("GITHUB_DATE_FIELD_ID"),
   };
 }

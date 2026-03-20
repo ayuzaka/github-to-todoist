@@ -1,15 +1,3 @@
-export type Mapping = {
-  readonly github_issue_id: string;
-  readonly github_issue_number: number;
-  readonly github_repo: string;
-  readonly todoist_task_id: string;
-  readonly last_synced_at: string | null;
-};
-
-export type MappingCache = {
-  readonly mappings: readonly Mapping[];
-};
-
 export type SyncResult = {
   readonly created: number;
   readonly updated: number;
@@ -40,19 +28,15 @@ export type TodoistTask = {
   readonly labels: readonly string[];
 };
 
-export type SyncDirection = "github-to-todoist" | "todoist-to-github" | "skip";
-
 export type SyncEntry = {
-  readonly mapping: Mapping;
   readonly issue: GitHubIssue;
   readonly task: TodoistTask;
-  readonly direction: SyncDirection;
 };
 
 export type SyncPlan = {
   readonly toCreate: readonly GitHubIssue[];
   readonly toUpdate: readonly SyncEntry[];
-  readonly toDelete: readonly Mapping[];
-  readonly toComplete: readonly Mapping[];
+  readonly toDelete: readonly TodoistTask[];
+  readonly toComplete: readonly TodoistTask[];
   readonly toSkip: number;
 };

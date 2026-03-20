@@ -1,17 +1,5 @@
-import type {
-  GitHubIssue,
-  Mapping,
-  MappingCache,
-  SyncDirection,
-  SyncPlan,
-  TodoistTask,
-} from "./types";
-import {
-  buildIssueUrlComment,
-  determineSyncDirection,
-  extractIssueUrlFromDescription,
-  planSync,
-} from "./sync-planner";
+import type { GitHubIssue, SyncPlan, TodoistTask } from "./types";
+import { buildIssueUrlComment, extractIssueUrlFromDescription, planSync } from "./sync-planner";
 import { describe, expect, test } from "vitest";
 
 const baseIssue: GitHubIssue = {
@@ -34,14 +22,6 @@ const baseTask: TodoistTask = {
   updatedAt: "2026-03-10T00:00:00Z",
   dueDate: null,
   labels: [],
-};
-
-const baseMapping: Mapping = {
-  github_issue_id: "I_001",
-  github_issue_number: 1,
-  github_repo: "owner/repo",
-  todoist_task_id: "task_001",
-  last_synced_at: "2026-03-12T00:00:00Z",
 };
 
 describe(extractIssueUrlFromDescription, () => {
@@ -98,108 +78,14 @@ describe(buildIssueUrlComment, () => {
   });
 });
 
-describe(determineSyncDirection, () => {
-  test("GitHub のみ更新後に更新されている場合 github-to-todoist", () => {
-    // Arrange
-    const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-12T00:00:00Z" };
-    const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-13T00:00:00Z" };
-    const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-10T00:00:00Z" };
-
-    // Act
-    const result = determineSyncDirection(mapping, issue, task);
-
-    // Assert
-    expect(result).toBe<SyncDirection>("github-to-todoist");
-  });
-
-  test("Todoist のみ更新後に更新されている場合 todoist-to-github", () => {
-    // Arrange
-    const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-12T00:00:00Z" };
-    const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" };
-    const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-13T00:00:00Z" };
-
-    // Act
-    const result = determineSyncDirection(mapping, issue, task);
-
-    // Assert
-    expect(result).toBe<SyncDirection>("todoist-to-github");
-  });
-
-  test("両方更新（競合）で GitHub が新しい場合 github-to-todoist", () => {
-    // Arrange
-    const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-10T00:00:00Z" };
-    const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-13T00:00:00Z" };
-    const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-12T00:00:00Z" };
-
-    // Act
-    const result = determineSyncDirection(mapping, issue, task);
-
-    // Assert
-    expect(result).toBe<SyncDirection>("github-to-todoist");
-  });
-
-  test("両方更新（競合）で Todoist が新しい場合 todoist-to-github", () => {
-    // Arrange
-    const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-10T00:00:00Z" };
-    const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-12T00:00:00Z" };
-    const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-13T00:00:00Z" };
-
-    // Act
-    const result = determineSyncDirection(mapping, issue, task);
-
-    // Assert
-    expect(result).toBe<SyncDirection>("todoist-to-github");
-  });
-
-  test("両方更新（競合）で同時刻の場合 GitHub が勝つ（タイブレーク）", () => {
-    // Arrange
-    const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-10T00:00:00Z" };
-    const sameTime = "2026-03-13T00:00:00Z";
-    const issue: GitHubIssue = { ...baseIssue, updatedAt: sameTime };
-    const task: TodoistTask = { ...baseTask, updatedAt: sameTime };
-
-    // Act
-    const result = determineSyncDirection(mapping, issue, task);
-
-    // Assert
-    expect(result).toBe<SyncDirection>("github-to-todoist");
-  });
-
-  test("どちらも更新なしの場合 skip", () => {
-    // Arrange
-    const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-14T00:00:00Z" };
-    const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" };
-    const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-10T00:00:00Z" };
-
-    // Act
-    const result = determineSyncDirection(mapping, issue, task);
-
-    // Assert
-    expect(result).toBe<SyncDirection>("skip");
-  });
-
-  test("last_synced_at が null の場合 競合として LWW を適用する", () => {
-    // Arrange
-    const mapping: Mapping = { ...baseMapping, last_synced_at: null };
-    const issue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-13T00:00:00Z" };
-    const task: TodoistTask = { ...baseTask, updatedAt: "2026-03-12T00:00:00Z" };
-
-    // Act
-    const result = determineSyncDirection(mapping, issue, task);
-
-    // Assert
-    expect(result).toBe<SyncDirection>("github-to-todoist");
-  });
-});
-
 describe(planSync, () => {
-  test("キャッシュにない Issue は toCreate に追加する", () => {
+  test("タスクが存在しない OPEN Issue は toCreate に追加する", () => {
     // Arrange
     const issues: readonly GitHubIssue[] = [baseIssue];
     const tasks: readonly TodoistTask[] = [];
 
     // Act
-    const result = planSync(issues, tasks, { mappings: [] });
+    const result = planSync(issues, tasks);
 
     // Assert
     expect(result.toCreate).toStrictEqual([baseIssue]);
@@ -207,132 +93,126 @@ describe(planSync, () => {
     expect(result.toSkip).toBe(0);
   });
 
-  test("キャッシュにある Issue でタスクが見つかる場合 toUpdate に追加する", () => {
+  test("description URL が一致するタスクがありタイトルが異なる場合 toUpdate に追加する", () => {
     // Arrange
-    const issues: readonly GitHubIssue[] = [{ ...baseIssue, updatedAt: "2026-03-13T00:00:00Z" }];
-    const tasks: readonly TodoistTask[] = [{ ...baseTask, updatedAt: "2026-03-10T00:00:00Z" }];
-    const cache: MappingCache = { mappings: [baseMapping] };
+    const issue: GitHubIssue = { ...baseIssue, title: "Updated Title" };
+    const issues: readonly GitHubIssue[] = [issue];
+    const tasks: readonly TodoistTask[] = [baseTask];
 
     // Act
-    const result = planSync(issues, tasks, cache);
+    const result = planSync(issues, tasks);
 
     // Assert
     expect(result.toUpdate).toHaveLength(1);
-    expect(result.toUpdate[0]?.direction).toBe<SyncDirection>("github-to-todoist");
+    expect(result.toUpdate[0]?.issue).toBe(issue);
+    expect(result.toUpdate[0]?.task).toBe(baseTask);
     expect(result.toCreate).toStrictEqual([]);
   });
 
-  test("更新なしのペアは toSkip にカウントする", () => {
+  test("description URL が一致するタスクがあり期日が異なる場合 toUpdate に追加する", () => {
     // Arrange
-    const mapping: Mapping = { ...baseMapping, last_synced_at: "2026-03-14T00:00:00Z" };
-    const issues: readonly GitHubIssue[] = [{ ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" }];
-    const tasks: readonly TodoistTask[] = [{ ...baseTask, updatedAt: "2026-03-10T00:00:00Z" }];
-    const cache: MappingCache = { mappings: [mapping] };
+    const issue: GitHubIssue = { ...baseIssue, dueDate: "2026-03-20" };
+    const issues: readonly GitHubIssue[] = [issue];
+    const tasks: readonly TodoistTask[] = [baseTask];
 
     // Act
-    const result = planSync(issues, tasks, cache);
+    const result = planSync(issues, tasks);
+
+    // Assert
+    expect(result.toUpdate).toHaveLength(1);
+    expect(result.toCreate).toStrictEqual([]);
+  });
+
+  test("タイトルも期日も同じ場合 toSkip にカウントする", () => {
+    // Arrange
+    const issues: readonly GitHubIssue[] = [baseIssue];
+    const tasks: readonly TodoistTask[] = [baseTask];
+
+    // Act
+    const result = planSync(issues, tasks);
 
     // Assert
     expect(result.toSkip).toBe(1);
     expect(result.toUpdate).toStrictEqual([]);
   });
 
-  test("キャッシュにある Issue でタスクが削除済みの場合 toDelete に追加する", () => {
-    // Arrange
-    const issues: readonly GitHubIssue[] = [baseIssue];
-    const tasks: readonly TodoistTask[] = [];
-    const cache: MappingCache = { mappings: [baseMapping] };
-
-    // Act
-    const result: SyncPlan = planSync(issues, tasks, cache);
-
-    // Assert
-    expect(result.toDelete).toStrictEqual([baseMapping]);
-    expect(result.toCreate).toStrictEqual([]);
-  });
-
-  test("CLOSED な Issue のマッピングは toComplete に追加する", () => {
+  test("CLOSED Issue で対応タスクがある場合 toComplete に追加する", () => {
     // Arrange
     const closedIssue: GitHubIssue = { ...baseIssue, state: "CLOSED" };
     const issues: readonly GitHubIssue[] = [closedIssue];
     const tasks: readonly TodoistTask[] = [baseTask];
-    const cache: MappingCache = { mappings: [baseMapping] };
 
     // Act
-    const result = planSync(issues, tasks, cache);
+    const result = planSync(issues, tasks);
 
     // Assert
-    expect(result.toComplete).toStrictEqual([baseMapping]);
+    expect(result.toComplete).toStrictEqual([baseTask]);
     expect(result.toUpdate).toStrictEqual([]);
   });
 
-  test("projectItemId が null の OPEN Issue（プロジェクトから削除）は toDelete に追加する", () => {
+  test("CLOSED Issue で対応タスクがない場合はスキップする", () => {
+    // Arrange
+    const closedIssue: GitHubIssue = { ...baseIssue, state: "CLOSED" };
+    const issues: readonly GitHubIssue[] = [closedIssue];
+    const tasks: readonly TodoistTask[] = [];
+
+    // Act
+    const result: SyncPlan = planSync(issues, tasks);
+
+    // Assert
+    expect(result.toComplete).toStrictEqual([]);
+    expect(result.toDelete).toStrictEqual([]);
+    expect(result.toCreate).toStrictEqual([]);
+  });
+
+  test("projectItemId が null の OPEN Issue で対応タスクがある場合 toDelete に追加する", () => {
     // Arrange
     const removedIssue: GitHubIssue = { ...baseIssue, projectItemId: null };
     const issues: readonly GitHubIssue[] = [removedIssue];
     const tasks: readonly TodoistTask[] = [baseTask];
-    const cache: MappingCache = { mappings: [baseMapping] };
 
     // Act
-    const result = planSync(issues, tasks, cache);
+    const result = planSync(issues, tasks);
 
     // Assert
-    expect(result.toDelete).toStrictEqual([baseMapping]);
+    expect(result.toDelete).toStrictEqual([baseTask]);
   });
 
-  test("キャッシュにない Issue でタスク description に URL が一致する場合 toUpdate に追加する", () => {
+  test("projectItemId が null の OPEN Issue で対応タスクがない場合はスキップする", () => {
     // Arrange
-    const issues: readonly GitHubIssue[] = [baseIssue];
-    const tasks: readonly TodoistTask[] = [baseTask];
-
-    // Act
-    const result = planSync(issues, tasks, { mappings: [] });
-
-    // Assert
-    expect(result.toUpdate).toHaveLength(1);
-    expect(result.toCreate).toStrictEqual([]);
-  });
-
-  test("CLOSED Issue でタスクが削除済みの場合 toDelete に追加する", () => {
-    // Arrange
-    const closedIssue: GitHubIssue = { ...baseIssue, state: "CLOSED" };
-    const issues: readonly GitHubIssue[] = [closedIssue];
+    const removedIssue: GitHubIssue = { ...baseIssue, projectItemId: null };
+    const issues: readonly GitHubIssue[] = [removedIssue];
     const tasks: readonly TodoistTask[] = [];
-    const cache: MappingCache = { mappings: [baseMapping] };
 
     // Act
-    const result = planSync(issues, tasks, cache);
-
-    // Assert
-    expect(result.toDelete).toStrictEqual([baseMapping]);
-    expect(result.toComplete).toStrictEqual([]);
-  });
-
-  test("issues リストに含まれないマッピングでタスクが削除済みの場合 toDelete に追加する", () => {
-    // Arrange
-    const issues: readonly GitHubIssue[] = [];
-    const tasks: readonly TodoistTask[] = [];
-    const cache: MappingCache = { mappings: [baseMapping] };
-
-    // Act
-    const result = planSync(issues, tasks, cache);
-
-    // Assert
-    expect(result.toDelete).toStrictEqual([baseMapping]);
-  });
-
-  test("issues リストに含まれないマッピングでタスクが存在する場合はスキップする", () => {
-    // Arrange
-    const issues: readonly GitHubIssue[] = [];
-    const tasks: readonly TodoistTask[] = [baseTask];
-    const cache: MappingCache = { mappings: [baseMapping] };
-
-    // Act
-    const result = planSync(issues, tasks, cache);
+    const result = planSync(issues, tasks);
 
     // Assert
     expect(result.toDelete).toStrictEqual([]);
-    expect(result.toComplete).toStrictEqual([]);
-    expect(result.toSkip).toBe(0);
+  });
+
+  test("どの Issue にも対応しない孤立タスクは toDelete に追加する", () => {
+    // Arrange
+    const issues: readonly GitHubIssue[] = [];
+    const tasks: readonly TodoistTask[] = [baseTask];
+
+    // Act
+    const result = planSync(issues, tasks);
+
+    // Assert
+    expect(result.toDelete).toStrictEqual([baseTask]);
+  });
+
+  test("description に URL がないタスクは孤立タスクとして toDelete に追加する", () => {
+    // Arrange
+    const taskWithoutUrl: TodoistTask = { ...baseTask, description: "no url here" };
+    const issues: readonly GitHubIssue[] = [];
+    const tasks: readonly TodoistTask[] = [taskWithoutUrl];
+
+    // Act
+    const result = planSync(issues, tasks);
+
+    // Assert
+    expect(result.toDelete).toStrictEqual([taskWithoutUrl]);
   });
 });

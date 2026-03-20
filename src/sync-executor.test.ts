@@ -1,15 +1,11 @@
-import * as githubOps from "./github";
 import * as todoistOps from "./todoist";
-import type { GitHubIssue, Mapping, MappingCache, SyncPlan, TodoistTask } from "./types";
+import type { GitHubIssue, SyncPlan, TodoistTask } from "./types";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { GitHubExec } from "./github";
 import type { SyncConfig } from "./sync-executor";
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import { executeSyncPlan } from "./sync-executor";
-import { graphql } from "@octokit/graphql";
 
 vi.mock(import("./todoist"));
-vi.mock(import("./github"));
 
 const baseIssue: GitHubIssue = {
   id: "I_001",
@@ -33,21 +29,9 @@ const baseTask: TodoistTask = {
   labels: [],
 };
 
-const baseMapping: Mapping = {
-  github_issue_id: "I_001",
-  github_issue_number: 1,
-  github_repo: "owner/repo",
-  todoist_task_id: "task_001",
-  last_synced_at: "2026-03-12T00:00:00Z",
-};
-
-const emptyCache: MappingCache = { mappings: [] };
-
 const config: SyncConfig = {
   githubProjectOwner: "owner",
   githubProjectNumber: 1,
-  githubProjectId: "PVT_001",
-  githubDateFieldId: "FIELD_001",
   todoistProjectId: "proj_001",
 };
 
@@ -62,7 +46,6 @@ function makeEmptyPlan(): SyncPlan {
 }
 
 const mockTodoist = new TodoistApi("mock-token");
-const mockGitHub: GitHubExec = graphql.defaults({ headers: {} });
 
 describe(executeSyncPlan, () => {
   beforeEach(() => {
@@ -72,156 +55,66 @@ describe(executeSyncPlan, () => {
     vi.mocked(todoistOps.updateTask).mockResolvedValue();
     vi.mocked(todoistOps.completeTask).mockResolvedValue();
     vi.mocked(todoistOps.deleteTask).mockResolvedValue();
-    vi.mocked(githubOps.updateIssueTitle).mockResolvedValue();
-    vi.mocked(githubOps.closeIssue).mockResolvedValue();
-    vi.mocked(githubOps.updateProjectItemDate).mockResolvedValue();
   });
 
-  test("toCreate: Todoist タスクを作成してキャッシュに追加する", async () => {
+  test("toCreate: Todoist タスクを作成する", async () => {
     // Arrange
     const newTask: TodoistTask = { ...baseTask, id: "task_new" };
     vi.mocked(todoistOps.createTask).mockResolvedValue(newTask);
     const plan: SyncPlan = { ...makeEmptyPlan(), toCreate: [baseIssue] };
 
     // Act
-    const { result, updatedCache } = await executeSyncPlan(plan, {
-      github: mockGitHub,
-      todoist: mockTodoist,
-      cache: emptyCache,
-      config,
-    });
+    const result = await executeSyncPlan(plan, { todoist: mockTodoist, config });
 
     // Assert
     expect(result.created).toBe(1);
-    expect(updatedCache.mappings).toHaveLength(1);
-    expect(updatedCache.mappings[0]?.todoist_task_id).toBe("task_new");
-    expect(updatedCache.mappings[0]?.last_synced_at).toBe(baseIssue.createdAt);
   });
 
-  test("toDelete: Todoist タスクを削除してキャッシュから除去する", async () => {
+  test("toDelete: Todoist タスクを削除する", async () => {
     // Arrange
-    const plan: SyncPlan = { ...makeEmptyPlan(), toDelete: [baseMapping] };
-    const cache: MappingCache = { mappings: [baseMapping] };
+    const plan: SyncPlan = { ...makeEmptyPlan(), toDelete: [baseTask] };
 
     // Act
-    const { result, updatedCache } = await executeSyncPlan(plan, {
-      github: mockGitHub,
-      todoist: mockTodoist,
-      cache,
-      config,
-    });
+    const result = await executeSyncPlan(plan, { todoist: mockTodoist, config });
 
     // Assert
     expect(result.deleted).toBe(1);
-    expect(updatedCache.mappings).toHaveLength(0);
-    expect(vi.mocked(todoistOps.deleteTask)).toHaveBeenCalledWith(
-      mockTodoist,
-      baseMapping.todoist_task_id,
-    );
+    expect(vi.mocked(todoistOps.deleteTask)).toHaveBeenCalledWith(mockTodoist, baseTask.id);
   });
 
-  test("toComplete: Todoist タスクを完了してキャッシュから除去する", async () => {
+  test("toComplete: Todoist タスクを完了する", async () => {
     // Arrange
-    const plan: SyncPlan = { ...makeEmptyPlan(), toComplete: [baseMapping] };
-    const cache: MappingCache = { mappings: [baseMapping] };
+    const plan: SyncPlan = { ...makeEmptyPlan(), toComplete: [baseTask] };
 
     // Act
-    const { result, updatedCache } = await executeSyncPlan(plan, {
-      github: mockGitHub,
-      todoist: mockTodoist,
-      cache,
-      config,
-    });
+    const result = await executeSyncPlan(plan, { todoist: mockTodoist, config });
 
     // Assert
     expect(result.deleted).toBe(1);
-    expect(updatedCache.mappings).toHaveLength(0);
-    expect(vi.mocked(todoistOps.completeTask)).toHaveBeenCalledWith(
-      mockTodoist,
-      baseMapping.todoist_task_id,
-    );
+    expect(vi.mocked(todoistOps.completeTask)).toHaveBeenCalledWith(mockTodoist, baseTask.id);
   });
 
-  test("toUpdate github-to-todoist: Todoist タスクのタイトルと期日を更新する", async () => {
+  test("toUpdate: Todoist タスクのタイトルと期日を更新する", async () => {
     // Arrange
+    const updatedIssue: GitHubIssue = {
+      ...baseIssue,
+      title: "Updated Title",
+      dueDate: "2026-03-25",
+    };
     const plan: SyncPlan = {
       ...makeEmptyPlan(),
-      toUpdate: [
-        { mapping: baseMapping, issue: baseIssue, task: baseTask, direction: "github-to-todoist" },
-      ],
+      toUpdate: [{ issue: updatedIssue, task: baseTask }],
     };
-    const cache: MappingCache = { mappings: [baseMapping] };
 
     // Act
-    const { result, updatedCache } = await executeSyncPlan(plan, {
-      github: mockGitHub,
-      todoist: mockTodoist,
-      cache,
-      config,
-    });
+    const result = await executeSyncPlan(plan, { todoist: mockTodoist, config });
 
     // Assert
     expect(result.updated).toBe(1);
     expect(vi.mocked(todoistOps.updateTask)).toHaveBeenCalledWith(mockTodoist, baseTask.id, {
-      content: baseIssue.title,
-      dueDate: baseIssue.dueDate,
+      content: updatedIssue.title,
+      dueDate: updatedIssue.dueDate,
     });
-    expect(updatedCache.mappings[0]?.last_synced_at).not.toBe(baseMapping.last_synced_at);
-  });
-
-  test("toUpdate todoist-to-github: GitHub Issue のタイトルを更新する", async () => {
-    // Arrange
-    const plan: SyncPlan = {
-      ...makeEmptyPlan(),
-      toUpdate: [
-        { mapping: baseMapping, issue: baseIssue, task: baseTask, direction: "todoist-to-github" },
-      ],
-    };
-    const cache: MappingCache = { mappings: [baseMapping] };
-
-    // Act
-    const { result } = await executeSyncPlan(plan, {
-      github: mockGitHub,
-      todoist: mockTodoist,
-      cache,
-      config,
-    });
-
-    // Assert
-    expect(result.updated).toBe(1);
-    expect(vi.mocked(githubOps.updateIssueTitle)).toHaveBeenCalledWith(
-      mockGitHub,
-      baseIssue.id,
-      baseTask.content,
-    );
-  });
-
-  test("toUpdate todoist-to-github: タスク完了時に GitHub Issue をクローズする", async () => {
-    // Arrange
-    const completedTask: TodoistTask = { ...baseTask, isCompleted: true };
-    const plan: SyncPlan = {
-      ...makeEmptyPlan(),
-      toUpdate: [
-        {
-          mapping: baseMapping,
-          issue: baseIssue,
-          task: completedTask,
-          direction: "todoist-to-github",
-        },
-      ],
-    };
-    const cache: MappingCache = { mappings: [baseMapping] };
-
-    // Act
-    await executeSyncPlan(plan, {
-      github: mockGitHub,
-      todoist: mockTodoist,
-      cache,
-      config,
-    });
-
-    // Assert
-    expect(vi.mocked(githubOps.closeIssue)).toHaveBeenCalledWith(mockGitHub, baseIssue.id);
   });
 
   test("エラー発生時は errors に記録して処理を続行する", async () => {
@@ -230,17 +123,11 @@ describe(executeSyncPlan, () => {
     const plan: SyncPlan = { ...makeEmptyPlan(), toCreate: [baseIssue] };
 
     // Act
-    const { result, updatedCache } = await executeSyncPlan(plan, {
-      github: mockGitHub,
-      todoist: mockTodoist,
-      cache: emptyCache,
-      config,
-    });
+    const result = await executeSyncPlan(plan, { todoist: mockTodoist, config });
 
     // Assert
     expect(result.errors).toHaveLength(1);
     expect(result.created).toBe(0);
-    expect(updatedCache.mappings).toHaveLength(0);
   });
 
   test("toSkip は result.skipped に反映される", async () => {
@@ -248,12 +135,7 @@ describe(executeSyncPlan, () => {
     const plan: SyncPlan = { ...makeEmptyPlan(), toSkip: 5 };
 
     // Act
-    const { result } = await executeSyncPlan(plan, {
-      github: mockGitHub,
-      todoist: mockTodoist,
-      cache: emptyCache,
-      config,
-    });
+    const result = await executeSyncPlan(plan, { todoist: mockTodoist, config });
 
     // Assert
     expect(result.skipped).toBe(5);

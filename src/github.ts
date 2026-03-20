@@ -3,13 +3,6 @@ import { graphql } from "@octokit/graphql";
 
 export type GitHubExec = typeof graphql;
 
-type UpdateProjectItemDateParams = {
-  readonly projectId: string;
-  readonly itemId: string;
-  readonly fieldId: string;
-  readonly date: string | null;
-};
-
 type FieldValueNode = {
   readonly __typename?: string;
   readonly field?: { readonly name?: string };
@@ -76,47 +69,6 @@ const GET_PROJECT_ITEMS = `
           }
         }
       }
-    }
-  }
-`;
-
-const UPDATE_ISSUE_TITLE = `
-  mutation UpdateIssueTitle($issueId: ID!, $title: String!) {
-    updateIssue(input: { id: $issueId, title: $title }) {
-      issue { id }
-    }
-  }
-`;
-
-const CLOSE_ISSUE = `
-  mutation CloseIssue($issueId: ID!) {
-    closeIssue(input: { issueId: $issueId }) {
-      issue { id }
-    }
-  }
-`;
-
-const UPDATE_PROJECT_DATE = `
-  mutation UpdateProjectDate($projectId: ID!, $itemId: ID!, $fieldId: ID!, $date: Date!) {
-    updateProjectV2ItemFieldValue(input: {
-      projectId: $projectId
-      itemId: $itemId
-      fieldId: $fieldId
-      value: { date: $date }
-    }) {
-      projectV2Item { id }
-    }
-  }
-`;
-
-const CLEAR_PROJECT_DATE = `
-  mutation ClearProjectDate($projectId: ID!, $itemId: ID!, $fieldId: ID!) {
-    clearProjectV2ItemFieldValue(input: {
-      projectId: $projectId
-      itemId: $itemId
-      fieldId: $fieldId
-    }) {
-      projectV2Item { id }
     }
   }
 `;
@@ -202,27 +154,4 @@ export async function getProjectItems(
   projectNumber: number,
 ): Promise<readonly GitHubIssue[]> {
   return fetchAllPages({ exec, owner, projectNumber, cursor: null, accumulated: [] });
-}
-
-export async function updateIssueTitle(
-  exec: GitHubExec,
-  issueId: string,
-  title: string,
-): Promise<void> {
-  await exec(UPDATE_ISSUE_TITLE, { issueId, title });
-}
-
-export async function closeIssue(exec: GitHubExec, issueId: string): Promise<void> {
-  await exec(CLOSE_ISSUE, { issueId });
-}
-
-export async function updateProjectItemDate(
-  exec: GitHubExec,
-  { projectId, itemId, fieldId, date }: UpdateProjectItemDateParams,
-): Promise<void> {
-  if (date === null) {
-    await exec(CLEAR_PROJECT_DATE, { projectId, itemId, fieldId });
-  } else {
-    await exec(UPDATE_PROJECT_DATE, { projectId, itemId, fieldId, date });
-  }
 }
