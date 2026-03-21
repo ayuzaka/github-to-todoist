@@ -1,4 +1,4 @@
-import type { GitHubIssue, SyncEntry, SyncPlan, TodoistTask } from "./types";
+import type { GitHubIssue, SyncEntry, SyncPlan, TodoistTask } from "./types.ts";
 
 export function extractIssueUrlFromDescription(description: string): string | null {
   const match = /<!-- github-to-todoist: (https?:\/\/[^\s]+) -->/.exec(description);

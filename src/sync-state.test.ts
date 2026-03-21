@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { getSyncStateFilePath, loadSyncState, saveSyncState } from "./sync-state";
+import { getSyncStateFilePath, loadSyncState, saveSyncState } from "./sync-state.ts";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 vi.mock(import("node:fs/promises"));

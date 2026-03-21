@@ -1,4 +1,4 @@
-import type { GitHubIssue } from "./types";
+import type { GitHubIssue } from "./types.ts";
 import { graphql } from "@octokit/graphql";
 
 type GitHubExec = typeof graphql;

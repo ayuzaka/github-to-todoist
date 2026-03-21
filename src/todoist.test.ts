@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getTask, mapTodoistTask } from "./todoist";
+import { getTask, mapTodoistTask } from "./todoist.ts";
 import { TodoistApi } from "@doist/todoist-api-typescript";
-import type { TodoistTask } from "./types";
+import type { TodoistTask } from "./types.ts";
 
 type Task = Parameters<typeof mapTodoistTask>[0];
 

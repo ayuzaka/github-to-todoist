@@ -1,4 +1,4 @@
-import type { SyncPlan, SyncResult } from "./types";
+import type { SyncPlan, SyncResult } from "./types.ts";
 import {
   addLabelToTask,
   completeTask,
@@ -6,9 +6,9 @@ import {
   deleteTask,
   getOrCreateLabel,
   updateTask,
-} from "./todoist";
+} from "./todoist.ts";
 import type { TodoistApi } from "@doist/todoist-api-typescript";
-import { buildIssueUrlComment } from "./sync-planner";
+import { buildIssueUrlComment } from "./sync-planner.ts";
 
 export type SyncConfig = {
   readonly githubProjectOwner: string;

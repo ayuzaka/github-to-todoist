@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { getEnv } from "./env";
+import { getEnv } from "./env.ts";
 import { homedir } from "node:os";
 
 type SyncState = {

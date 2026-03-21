@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { extractDueDate, mapProjectItem } from "./github";
-import type { ProjectItemNode } from "./github";
+import { extractDueDate, mapProjectItem } from "./github.ts";
+import type { ProjectItemNode } from "./github.ts";
 
 const baseIssueContent = {
   __typename: "Issue" as const,

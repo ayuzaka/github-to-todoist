@@ -1,18 +1,18 @@
-import * as github from "./github";
-import * as syncExecutor from "./sync-executor";
-import * as syncPlanner from "./sync-planner";
-import * as syncState from "./sync-state";
-import * as todoist from "./todoist";
+import * as github from "./github.ts";
+import * as syncExecutor from "./sync-executor.ts";
+import * as syncPlanner from "./sync-planner.ts";
+import * as syncState from "./sync-state.ts";
+import * as todoist from "./todoist.ts";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { SyncPlan } from "./types";
-import { sync } from "./index";
-import { validateEnv } from "./env";
+import type { SyncPlan } from "./types.ts";
+import { sync } from "./index.ts";
+import { validateEnv } from "./env.ts";
 
-vi.mock(import("./github"));
-vi.mock(import("./sync-state"));
-vi.mock(import("./sync-executor"));
-vi.mock(import("./todoist"));
-vi.mock(import("./sync-planner"));
+vi.mock(import("./github.ts"));
+vi.mock(import("./sync-state.ts"));
+vi.mock(import("./sync-executor.ts"));
+vi.mock(import("./todoist.ts"));
+vi.mock(import("./sync-planner.ts"));
 vi.mock(import("@doist/todoist-api-typescript"));
 
 const emptyPlan: SyncPlan = {

@@ -19,6 +19,8 @@
     "noUnusedParameters": true,
     "isolatedModules": true,
     "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "types": ["node"]

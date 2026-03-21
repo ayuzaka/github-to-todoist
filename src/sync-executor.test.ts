@@ -1,11 +1,11 @@
-import * as todoistOps from "./todoist";
-import type { GitHubIssue, SyncPlan, TodoistTask } from "./types";
+import * as todoistOps from "./todoist.ts";
+import type { GitHubIssue, SyncPlan, TodoistTask } from "./types.ts";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { SyncConfig } from "./sync-executor";
+import type { SyncConfig } from "./sync-executor.ts";
 import { TodoistApi } from "@doist/todoist-api-typescript";
-import { executeSyncPlan } from "./sync-executor";
+import { executeSyncPlan } from "./sync-executor.ts";
 
-vi.mock(import("./todoist"));
+vi.mock(import("./todoist.ts"));
 
 const baseIssue: GitHubIssue = {
   id: "I_001",

@@ -1,10 +1,10 @@
-import { createGitHubExec, getProjectItems } from "./github";
-import { getSyncStateFilePath, loadSyncState, saveSyncState } from "./sync-state";
+import { createGitHubExec, getProjectItems } from "./github.ts";
+import { getSyncStateFilePath, loadSyncState, saveSyncState } from "./sync-state.ts";
 import { TodoistApi } from "@doist/todoist-api-typescript";
-import { executeSyncPlan } from "./sync-executor";
-import { getProjectTasks } from "./todoist";
-import { planSync } from "./sync-planner";
-import { validateEnv } from "./env";
+import { executeSyncPlan } from "./sync-executor.ts";
+import { getProjectTasks } from "./todoist.ts";
+import { planSync } from "./sync-planner.ts";
+import { validateEnv } from "./env.ts";
 
 export async function sync(dryRun = false): Promise<void> {
   const env = validateEnv();

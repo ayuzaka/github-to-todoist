@@ -1,5 +1,5 @@
 import type { Task, TodoistApi } from "@doist/todoist-api-typescript";
-import type { TodoistTask } from "./types";
+import type { TodoistTask } from "./types.ts";
 
 type CreateTaskParams = {
   readonly content: string;
