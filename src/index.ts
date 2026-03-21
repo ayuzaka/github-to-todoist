@@ -6,7 +6,7 @@ import { getProjectTasks } from "./todoist";
 import { planSync } from "./sync-planner";
 import { validateEnv } from "./env";
 
-async function sync(): Promise<void> {
+export async function sync(dryRun = false): Promise<void> {
   const env = validateEnv();
 
   const github = createGitHubExec(env.githubToken);
@@ -21,6 +21,13 @@ async function sync(): Promise<void> {
   ]);
 
   const plan = planSync(issues, tasks, lastSyncedAt);
+
+  if (dryRun) {
+    process.stdout.write(
+      `[DRY RUN] Would sync: ${plan.toCreate.length} create, ${plan.toUpdate.length} update, ${plan.toDelete.length} delete, ${plan.toComplete.length} complete, ${plan.toSkip} skipped\n`,
+    );
+    return;
+  }
 
   const result = await executeSyncPlan(plan, {
     todoist,
@@ -47,5 +54,6 @@ async function sync(): Promise<void> {
 }
 
 if (import.meta.url === `file://${process.argv[1] ?? ""}`) {
-  await sync();
+  const dryRun = process.argv.includes("--dry-run");
+  await sync(dryRun);
 }

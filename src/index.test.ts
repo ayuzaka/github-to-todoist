@@ -1,5 +1,118 @@
+import * as github from "./github";
+import * as syncExecutor from "./sync-executor";
+import * as syncPlanner from "./sync-planner";
+import * as syncState from "./sync-state";
+import * as todoist from "./todoist";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { SyncPlan } from "./types";
+import { sync } from "./index";
 import { validateEnv } from "./env";
+
+vi.mock(import("./github"));
+vi.mock(import("./sync-state"));
+vi.mock(import("./sync-executor"));
+vi.mock(import("./todoist"));
+vi.mock(import("./sync-planner"));
+vi.mock(import("@doist/todoist-api-typescript"));
+
+const emptyPlan: SyncPlan = {
+  toCreate: [],
+  toUpdate: [],
+  toDelete: [],
+  toComplete: [],
+  toSkip: 0,
+};
+
+describe(sync, () => {
+  beforeEach(() => {
+    vi.stubEnv("GITHUB_TOKEN", "gh_token");
+    vi.stubEnv("GITHUB_PROJECT_NUMBER", "42");
+    vi.stubEnv("GITHUB_PROJECT_OWNER", "owner");
+    vi.stubEnv("TODOIST_TOKEN", "tod_token");
+    vi.stubEnv("TODOIST_PROJECT_ID", "proj_001");
+
+    vi.mocked(syncState.getSyncStateFilePath).mockReturnValue("/tmp/state.json");
+    vi.mocked(syncState.loadSyncState).mockResolvedValue({ lastSyncedAt: null });
+    vi.mocked(syncState.saveSyncState).mockResolvedValue();
+    vi.mocked(github.getProjectItems).mockResolvedValue([]);
+    vi.mocked(todoist.getProjectTasks).mockResolvedValue([]);
+    vi.mocked(syncPlanner.planSync).mockReturnValue(emptyPlan);
+    vi.mocked(syncExecutor.executeSyncPlan).mockResolvedValue({
+      created: 0,
+      updated: 0,
+      deleted: 0,
+      skipped: 0,
+      errors: [],
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("--dry-run のとき executeSyncPlan を呼ばない", async () => {
+    // Act
+    await sync(true);
+
+    // Assert
+    expect(vi.mocked(syncExecutor.executeSyncPlan)).not.toHaveBeenCalled();
+  });
+
+  test("--dry-run のとき saveSyncState を呼ばない", async () => {
+    // Act
+    await sync(true);
+
+    // Assert
+    expect(vi.mocked(syncState.saveSyncState)).not.toHaveBeenCalled();
+  });
+
+  test("--dry-run のとき [DRY RUN] プレフィックスで操作件数を出力する", async () => {
+    // Arrange
+    const writeSpy = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    vi.mocked(syncPlanner.planSync).mockReturnValue({
+      ...emptyPlan,
+      toCreate: [
+        {
+          id: "I_001",
+          number: 1,
+          title: "Test",
+          state: "OPEN",
+          updatedAt: "2026-03-01T00:00:00Z",
+          createdAt: "2026-03-01T00:00:00Z",
+          repository: "owner/repo",
+          projectItemId: "PI_001",
+          dueDate: null,
+        },
+      ],
+      toSkip: 3,
+    });
+
+    // Act
+    await sync(true);
+
+    // Assert
+    expect(writeSpy).toHaveBeenCalledWith(
+      "[DRY RUN] Would sync: 1 create, 0 update, 0 delete, 0 complete, 3 skipped\n",
+    );
+
+    writeSpy.mockRestore();
+  });
+
+  test("通常モードのとき executeSyncPlan と saveSyncState を呼ぶ", async () => {
+    // Act
+    await sync(false);
+
+    // Assert
+    expect(vi.mocked(syncExecutor.executeSyncPlan)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+    );
+    expect(vi.mocked(syncState.saveSyncState)).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+    );
+  });
+});
 
 describe(validateEnv, () => {
   beforeEach(() => {
