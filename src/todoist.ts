@@ -4,13 +4,13 @@ import type { TodoistTask } from "./types";
 type CreateTaskParams = {
   readonly content: string;
   readonly description: string;
-  readonly dueDate: string | undefined;
-  readonly labels?: readonly string[];
+  readonly dueDate: string | null;
+  readonly labels: readonly string[];
 };
 
 type UpdateTaskParams = {
-  readonly content?: string;
-  readonly dueDate?: string | null;
+  readonly content: string;
+  readonly dueDate: string | null;
 };
 
 export function mapTodoistTask(task: Task): TodoistTask {
@@ -89,18 +89,10 @@ export async function createTask(
   params: CreateTaskParams,
 ): Promise<TodoistTask> {
   const { content, description, dueDate, labels } = params;
-  const base = { content, description, projectId };
+  const base = { content, description, projectId, labels: [...labels] };
 
-  if (dueDate !== undefined && labels !== undefined) {
-    return mapTodoistTask(await api.addTask({ ...base, dueDate, labels: [...labels] }));
-  }
-
-  if (dueDate !== undefined) {
+  if (dueDate !== null) {
     return mapTodoistTask(await api.addTask({ ...base, dueDate }));
-  }
-
-  if (labels !== undefined) {
-    return mapTodoistTask(await api.addTask({ ...base, labels: [...labels] }));
   }
 
   return mapTodoistTask(await api.addTask(base));
@@ -112,29 +104,12 @@ export async function updateTask(
   params: UpdateTaskParams,
 ): Promise<void> {
   const { content, dueDate } = params;
-  if (dueDate === null && content !== undefined) {
+  if (dueDate === null) {
     await api.updateTask(taskId, { content, dueString: null });
     return;
   }
 
-  if (dueDate === null) {
-    await api.updateTask(taskId, { dueString: null });
-    return;
-  }
-
-  if (dueDate !== undefined && content !== undefined) {
-    await api.updateTask(taskId, { content, dueDate });
-    return;
-  }
-
-  if (dueDate !== undefined) {
-    await api.updateTask(taskId, { dueDate });
-    return;
-  }
-
-  if (content !== undefined) {
-    await api.updateTask(taskId, { content });
-  }
+  await api.updateTask(taskId, { content, dueDate });
 }
 
 export async function completeTask(api: TodoistApi, taskId: string): Promise<void> {

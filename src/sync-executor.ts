@@ -51,7 +51,7 @@ export async function executeSyncPlan(
         const task = await createTask(todoist, config.todoistProjectId, {
           content: issue.title,
           description,
-          dueDate: issue.dueDate ?? undefined,
+          dueDate: issue.dueDate,
           labels: [labelName],
         });
         await addLabelToTask(todoist, task.id, labelName);
