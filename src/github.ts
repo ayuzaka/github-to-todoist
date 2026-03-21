@@ -1,7 +1,7 @@
 import type { GitHubIssue } from "./types";
 import { graphql } from "@octokit/graphql";
 
-export type GitHubExec = typeof graphql;
+type GitHubExec = typeof graphql;
 
 type FieldValueNode = {
   readonly __typename?: string;
