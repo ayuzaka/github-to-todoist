@@ -4,7 +4,7 @@ import type { TodoistTask } from "./types";
 type CreateTaskParams = {
   readonly content: string;
   readonly description: string;
-  readonly dueDate?: string;
+  readonly dueDate: string | undefined;
   readonly labels?: readonly string[];
 };
 

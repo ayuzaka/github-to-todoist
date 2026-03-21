@@ -215,4 +215,53 @@ describe(planSync, () => {
     // Assert
     expect(result.toDelete).toStrictEqual([taskWithoutUrl]);
   });
+
+  test("lastSyncedAt 以前に更新された Issue はスキップされる", () => {
+    // Arrange
+    const oldIssue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" };
+    const issues: readonly GitHubIssue[] = [oldIssue];
+    const tasks: readonly TodoistTask[] = [baseTask];
+    const lastSyncedAt = "2026-03-15T00:00:00Z";
+
+    // Act
+    const result = planSync(issues, tasks, lastSyncedAt);
+
+    // Assert
+    expect(result.toSkip).toBe(1);
+    expect(result.toUpdate).toStrictEqual([]);
+    expect(result.toCreate).toStrictEqual([]);
+  });
+
+  test("lastSyncedAt より新しい Issue は通常通り処理される", () => {
+    // Arrange
+    const newIssue: GitHubIssue = {
+      ...baseIssue,
+      title: "Updated Title",
+      updatedAt: "2026-03-20T00:00:00Z",
+    };
+    const issues: readonly GitHubIssue[] = [newIssue];
+    const tasks: readonly TodoistTask[] = [baseTask];
+    const lastSyncedAt = "2026-03-15T00:00:00Z";
+
+    // Act
+    const result = planSync(issues, tasks, lastSyncedAt);
+
+    // Assert
+    expect(result.toUpdate).toHaveLength(1);
+    expect(result.toSkip).toBe(0);
+  });
+
+  test("lastSyncedAt でフィルタされた Issue に対応するタスクは孤立タスクとして誤削除されない", () => {
+    // Arrange
+    const oldIssue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" };
+    const issues: readonly GitHubIssue[] = [oldIssue];
+    const tasks: readonly TodoistTask[] = [baseTask];
+    const lastSyncedAt = "2026-03-15T00:00:00Z";
+
+    // Act
+    const result = planSync(issues, tasks, lastSyncedAt);
+
+    // Assert
+    expect(result.toDelete).toStrictEqual([]);
+  });
 });

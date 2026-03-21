@@ -13,7 +13,11 @@ function hasContentDiff(issue: GitHubIssue, task: TodoistTask): boolean {
   return issue.title !== task.content || issue.dueDate !== task.dueDate;
 }
 
-export function planSync(issues: readonly GitHubIssue[], tasks: readonly TodoistTask[]): SyncPlan {
+export function planSync(
+  issues: readonly GitHubIssue[],
+  tasks: readonly TodoistTask[],
+  lastSyncedAt: string | null = null,
+): SyncPlan {
   const taskByUrl = new Map<string, TodoistTask>();
   for (const task of tasks) {
     const url = extractIssueUrlFromDescription(task.description);
@@ -34,9 +38,17 @@ export function planSync(issues: readonly GitHubIssue[], tasks: readonly Todoist
     const issueUrl = `https://github.com/${issue.repository}/issues/${issue.number}`;
     const task = taskByUrl.get(issueUrl);
 
+    if (task !== undefined) {
+      handledTaskIds.add(task.id);
+    }
+
+    if (lastSyncedAt !== null && issue.updatedAt <= lastSyncedAt) {
+      toSkip++;
+      continue;
+    }
+
     if (issue.state === "CLOSED") {
       if (task !== undefined) {
-        handledTaskIds.add(task.id);
         toComplete.push(task);
       }
       continue;
@@ -44,7 +56,6 @@ export function planSync(issues: readonly GitHubIssue[], tasks: readonly Todoist
 
     if (issue.projectItemId === null) {
       if (task !== undefined) {
-        handledTaskIds.add(task.id);
         toDelete.push(task);
       }
       continue;
@@ -55,7 +66,6 @@ export function planSync(issues: readonly GitHubIssue[], tasks: readonly Todoist
       continue;
     }
 
-    handledTaskIds.add(task.id);
     if (hasContentDiff(issue, task)) {
       toUpdate.push({ issue, task });
     } else {

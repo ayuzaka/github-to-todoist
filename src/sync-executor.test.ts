@@ -15,7 +15,7 @@ const baseIssue: GitHubIssue = {
   updatedAt: "2026-03-13T00:00:00Z",
   createdAt: "2026-03-01T00:00:00Z",
   repository: "owner/repo",
-  projectItemId: "PVTI_001",
+  projectItemId: "ProjectItem_001",
   dueDate: null,
 };
 

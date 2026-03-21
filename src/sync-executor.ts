@@ -42,29 +42,41 @@ export async function executeSyncPlan(
     errors: [],
   };
 
-  const createResults = await Promise.allSettled(
-    plan.toCreate.map(async function (issue) {
-      const issueUrl = `https://github.com/${issue.repository}/issues/${issue.number}`;
-      const description = buildIssueUrlComment(issueUrl);
-      const labelName = await getOrCreateLabel(todoist, issue.repository);
-      let task;
-      if (issue.dueDate !== null) {
-        task = await createTask(todoist, config.todoistProjectId, {
+  const [createResults, deleteResults, completeResults, updateResults] = await Promise.all([
+    Promise.allSettled(
+      plan.toCreate.map(async (issue) => {
+        const issueUrl = `https://github.com/${issue.repository}/issues/${issue.number}`;
+        const description = buildIssueUrlComment(issueUrl);
+        const labelName = await getOrCreateLabel(todoist, issue.repository);
+        const task = await createTask(todoist, config.todoistProjectId, {
           content: issue.title,
           description,
+          dueDate: issue.dueDate ?? undefined,
+          labels: [labelName],
+        });
+        await addLabelToTask(todoist, task.id, labelName);
+      }),
+    ),
+    Promise.allSettled(
+      plan.toDelete.map(async (task) => {
+        await deleteTask(todoist, task.id);
+      }),
+    ),
+    Promise.allSettled(
+      plan.toComplete.map(async (task) => {
+        await completeTask(todoist, task.id);
+      }),
+    ),
+    Promise.allSettled(
+      plan.toUpdate.map(async (entry) => {
+        const { issue, task } = entry;
+        await updateTask(todoist, task.id, {
+          content: issue.title,
           dueDate: issue.dueDate,
-          labels: [labelName],
         });
-      } else {
-        task = await createTask(todoist, config.todoistProjectId, {
-          content: issue.title,
-          description,
-          labels: [labelName],
-        });
-      }
-      await addLabelToTask(todoist, task.id, labelName);
-    }),
-  );
+      }),
+    ),
+  ]);
 
   for (const res of createResults) {
     if (res.status === "fulfilled") {
@@ -74,12 +86,6 @@ export async function executeSyncPlan(
     }
   }
 
-  const deleteResults = await Promise.allSettled(
-    plan.toDelete.map(async function (task) {
-      await deleteTask(todoist, task.id);
-    }),
-  );
-
   for (const res of deleteResults) {
     if (res.status === "fulfilled") {
       r.deleted++;
@@ -88,12 +94,6 @@ export async function executeSyncPlan(
     }
   }
 
-  const completeResults = await Promise.allSettled(
-    plan.toComplete.map(async (task) => {
-      await completeTask(todoist, task.id);
-    }),
-  );
-
   for (const res of completeResults) {
     if (res.status === "fulfilled") {
       r.deleted++;
@@ -101,16 +101,6 @@ export async function executeSyncPlan(
       r.errors.push(String(res.reason));
     }
   }
-
-  const updateResults = await Promise.allSettled(
-    plan.toUpdate.map(async (entry) => {
-      const { issue, task } = entry;
-      await updateTask(todoist, task.id, {
-        content: issue.title,
-        dueDate: issue.dueDate,
-      });
-    }),
-  );
 
   for (const res of updateResults) {
     if (res.status === "fulfilled") {

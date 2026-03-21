@@ -1,4 +1,5 @@
 import { createGitHubExec, getProjectItems } from "./github";
+import { getSyncStateFilePath, loadSyncState, saveSyncState } from "./sync-state";
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import { executeSyncPlan } from "./sync-executor";
 import { getProjectTasks } from "./todoist";
@@ -11,12 +12,15 @@ async function sync(): Promise<void> {
   const github = createGitHubExec(env.githubToken);
   const todoist = new TodoistApi(env.todoistToken);
 
+  const syncStateFilePath = getSyncStateFilePath();
+  const { lastSyncedAt } = await loadSyncState(syncStateFilePath);
+
   const [issues, tasks] = await Promise.all([
     getProjectItems(github, env.githubProjectOwner, env.githubProjectNumber),
     getProjectTasks(todoist, env.todoistProjectId),
   ]);
 
-  const plan = planSync(issues, tasks);
+  const plan = planSync(issues, tasks, lastSyncedAt);
 
   const result = await executeSyncPlan(plan, {
     todoist,
@@ -35,8 +39,11 @@ async function sync(): Promise<void> {
     for (const err of result.errors) {
       process.stderr.write(`${err}\n`);
     }
+
     throw new Error(`Sync completed with ${result.errors.length} errors`);
   }
+
+  await saveSyncState(syncStateFilePath, new Date().toISOString());
 }
 
 if (import.meta.url === `file://${process.argv[1] ?? ""}`) {
