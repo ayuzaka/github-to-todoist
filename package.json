@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "prepare": "prek install",
+    "codegen": "graphql-codegen --config codegen.ts",
     "dev": "node --watch src/index.ts",
     "build": "tsdown",
     "lint": "oxlint --config ./oxlint.config.ts",
@@ -22,8 +23,13 @@
     "@octokit/graphql": "^9.0.3"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^6.2.1",
+    "@graphql-codegen/typescript": "^5.0.9",
+    "@graphql-codegen/typescript-operations": "^5.0.9",
     "@j178/prek": "^0.3.5",
+    "@octokit/graphql-schema": "^15.26.1",
     "@types/node": "^25.5.0",
+    "graphql": "^16.13.1",
     "knip": "^5.86.0",
     "oxfmt": "^0.40.0",
     "oxlint": "^1.55.0",

@@ -1,0 +1,83 @@
+query GetProjectItems($owner: String!, $projectNumber: Int!, $cursor: String) {
+  repositoryOwner(login: $owner) {
+    __typename
+    ... on User {
+      projectV2(number: $projectNumber) {
+        id
+        items(first: 100, after: $cursor) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            content {
+              __typename
+              ... on Issue {
+                id
+                number
+                title
+                labels(first: 100) {
+                  nodes {
+                    name
+                  }
+                }
+                state
+                updatedAt
+                createdAt
+                repository {
+                  nameWithOwner
+                }
+              }
+            }
+            dateField: fieldValueByName(name: "Date") {
+              __typename
+              ... on ProjectV2ItemFieldDateValue {
+                date
+              }
+            }
+          }
+        }
+      }
+    }
+    ... on Organization {
+      projectV2(number: $projectNumber) {
+        id
+        items(first: 100, after: $cursor) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            content {
+              __typename
+              ... on Issue {
+                id
+                number
+                title
+                labels(first: 100) {
+                  nodes {
+                    name
+                  }
+                }
+                state
+                updatedAt
+                createdAt
+                repository {
+                  nameWithOwner
+                }
+              }
+            }
+            dateField: fieldValueByName(name: "Date") {
+              __typename
+              ... on ProjectV2ItemFieldDateValue {
+                date
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

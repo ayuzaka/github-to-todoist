@@ -10,6 +10,7 @@ export type GitHubIssue = {
   readonly id: string;
   readonly number: number;
   readonly title: string;
+  readonly labels: readonly string[];
   readonly state: "OPEN" | "CLOSED";
   readonly updatedAt: string;
   readonly createdAt: string;

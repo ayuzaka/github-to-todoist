@@ -11,6 +11,7 @@ const baseIssue: GitHubIssue = {
   id: "I_001",
   number: 1,
   title: "Test Issue",
+  labels: ["backend"],
   state: "OPEN",
   updatedAt: "2026-03-13T00:00:00Z",
   createdAt: "2026-03-01T00:00:00Z",
@@ -21,12 +22,12 @@ const baseIssue: GitHubIssue = {
 
 const baseTask: TodoistTask = {
   id: "task_001",
-  content: "Test Issue",
+  content: "[#1] Test Issue",
   description: "<!-- github-to-todoist: https://github.com/owner/repo/issues/1 -->",
   isCompleted: false,
   updatedAt: "2026-03-10T00:00:00Z",
   dueDate: null,
-  labels: [],
+  labels: ["backend"],
 };
 
 const config: SyncConfig = {
@@ -99,6 +100,7 @@ describe(executeSyncPlan, () => {
     const updatedIssue: GitHubIssue = {
       ...baseIssue,
       title: "Updated Title",
+      labels: ["backend", "urgent"],
       dueDate: "2026-03-25",
     };
     const plan: SyncPlan = {
@@ -112,8 +114,9 @@ describe(executeSyncPlan, () => {
     // Assert
     expect(result.updated).toBe(1);
     expect(vi.mocked(todoistOps.updateTask)).toHaveBeenCalledWith(mockTodoist, baseTask.id, {
-      content: updatedIssue.title,
+      content: "[#1] Updated Title",
       dueDate: updatedIssue.dueDate,
+      labels: updatedIssue.labels,
     });
   });
 

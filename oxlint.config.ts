@@ -7,7 +7,7 @@ export default defineConfig({
   categories: {
     correctness: "warn",
   },
-  ignorePatterns: ["dist/"],
+  ignorePatterns: ["dist/", "src/**/*.generated.ts"],
   plugins: ["eslint", "typescript", "unicorn", "oxc", "import", "promise"],
   rules: {
     // eslint/pedantic

@@ -76,6 +76,7 @@ describe(sync, () => {
           id: "I_001",
           number: 1,
           title: "Test",
+          labels: [],
           state: "OPEN",
           updatedAt: "2026-03-01T00:00:00Z",
           createdAt: "2026-03-01T00:00:00Z",

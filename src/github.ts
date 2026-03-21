@@ -1,94 +1,32 @@
+import type { GetProjectItemsQuery, GetProjectItemsQueryVariables } from "./github.generated.ts";
 import type { GitHubIssue } from "./types.ts";
 import { graphql } from "@octokit/graphql";
+import { readFileSync } from "node:fs";
 
-type GitHubExec = typeof graphql;
+type GitHubExec = <Response>(
+  query: string,
+  parameters: GetProjectItemsQueryVariables,
+) => Promise<Response>;
 
-type FieldValueNode = {
-  readonly __typename?: string;
-  readonly field?: { readonly name?: string };
-  readonly date?: string;
-};
+type ArrayElement<T> = T extends readonly (infer U)[] ? U : never;
 
-type IssueContent = {
-  readonly __typename: "Issue";
-  readonly id: string;
-  readonly number: number;
-  readonly title: string;
-  readonly state: string;
-  readonly updatedAt: string;
-  readonly createdAt: string;
-  readonly repository: { readonly nameWithOwner: string };
-};
+type ProjectItems = NonNullable<
+  NonNullable<
+    NonNullable<NonNullable<GetProjectItemsQuery["repositoryOwner"]>["projectV2"]>["items"]
+  >
+>;
 
-export type ProjectItemNode = {
-  readonly id: string;
-  readonly content: IssueContent | { readonly __typename: string } | null;
-  readonly fieldValues: {
-    readonly nodes: readonly FieldValueNode[];
-  };
-};
+type ProjectItemNode = NonNullable<ArrayElement<NonNullable<ProjectItems["nodes"]>>>;
 
-type ProjectItemsResponse = {
-  readonly repositoryOwner: {
-    readonly projectV2: {
-      readonly id: string;
-      readonly items: {
-        readonly pageInfo: {
-          readonly hasNextPage: boolean;
-          readonly endCursor: string | null;
-        };
-        readonly nodes: readonly ProjectItemNode[];
-      };
-    };
-  };
-};
+type IssueContent = Extract<NonNullable<ProjectItemNode["content"]>, { __typename?: "Issue" }>;
+type IssueLabelNode = NonNullable<
+  ArrayElement<NonNullable<NonNullable<IssueContent["labels"]>["nodes"]>>
+>;
 
-const GET_PROJECT_ITEMS = `
-  query GetProjectItems($owner: String!, $projectNumber: Int!, $cursor: String) {
-    repositoryOwner(login: $owner) {
-      projectV2(number: $projectNumber) {
-        id
-        items(first: 100, after: $cursor) {
-          pageInfo { hasNextPage endCursor }
-          nodes {
-            id
-            content {
-              ... on Issue {
-                id number title state updatedAt createdAt
-                repository { nameWithOwner }
-              }
-            }
-            fieldValues(first: 100) {
-              nodes {
-                ... on ProjectV2ItemFieldDateValue {
-                  field { ... on ProjectV2Field { name } }
-                  date
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
+const GET_PROJECT_ITEMS = readFileSync(new URL("github.graphql", import.meta.url), "utf8");
 
 function isIssueContent(content: ProjectItemNode["content"]): content is IssueContent {
   return content?.__typename === "Issue";
-}
-
-export function extractDueDate(nodes: readonly FieldValueNode[]): string | null {
-  for (const node of nodes) {
-    if (
-      node.__typename === "ProjectV2ItemFieldDateValue" &&
-      node.field?.name === "Date" &&
-      node.date !== undefined
-    ) {
-      return node.date;
-    }
-  }
-
-  return null;
 }
 
 export function mapProjectItem(node: ProjectItemNode): GitHubIssue | null {
@@ -98,16 +36,24 @@ export function mapProjectItem(node: ProjectItemNode): GitHubIssue | null {
     return null;
   }
 
+  const labelNodes = content.labels?.nodes ?? [];
+
   return {
     id: content.id,
     number: content.number,
     title: content.title,
+    labels: labelNodes
+      .filter((label): label is IssueLabelNode => label !== null)
+      .map((label) => label.name),
     state: content.state === "OPEN" ? "OPEN" : "CLOSED",
     updatedAt: content.updatedAt,
     createdAt: content.createdAt,
     repository: content.repository.nameWithOwner,
     projectItemId: node.id,
-    dueDate: extractDueDate(node.fieldValues.nodes),
+    dueDate:
+      node.dateField?.__typename === "ProjectV2ItemFieldDateValue"
+        ? (node.dateField.date ?? null)
+        : null,
   };
 }
 
@@ -121,13 +67,23 @@ type FetchParams = {
 
 async function fetchAllPages(params: FetchParams): Promise<readonly GitHubIssue[]> {
   const { exec, owner, projectNumber, cursor, accumulated } = params;
-  const { repositoryOwner } = await exec<ProjectItemsResponse>(GET_PROJECT_ITEMS, {
+  const variables: GetProjectItemsQueryVariables = {
     owner,
     projectNumber,
     cursor,
-  });
-  const { items } = repositoryOwner.projectV2;
-  const current = items.nodes.map(mapProjectItem).filter((item) => item !== null);
+  };
+  const { repositoryOwner } = await exec<GetProjectItemsQuery>(GET_PROJECT_ITEMS, variables);
+
+  if (repositoryOwner?.projectV2 === undefined || repositoryOwner.projectV2 === null) {
+    throw new Error(`GitHub owner '${owner}' does not support projectV2`);
+  }
+
+  const project = repositoryOwner.projectV2;
+  const { items } = project;
+  const current = (items.nodes ?? [])
+    .filter((node): node is ProjectItemNode => node !== null)
+    .map((node) => mapProjectItem(node))
+    .filter((item) => item !== null);
   const all = [...accumulated, ...current];
   if (!items.pageInfo.hasNextPage) {
     return all;
@@ -137,7 +93,7 @@ async function fetchAllPages(params: FetchParams): Promise<readonly GitHubIssue[
     exec,
     owner,
     projectNumber,
-    cursor: items.pageInfo.endCursor,
+    cursor: items.pageInfo.endCursor ?? null,
     accumulated: all,
   });
 }
