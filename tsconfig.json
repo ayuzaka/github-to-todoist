@@ -25,5 +25,5 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "exclude": ["node_modules", "oxlint.config.ts"]
+  "exclude": ["node_modules", "oxlint.config.ts", "src/github.generated.ts"]
 }
