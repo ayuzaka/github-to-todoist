@@ -35,46 +35,47 @@ export async function executeSyncPlan(
     errors: [],
   };
 
-  const [createResults, deleteResults, completeResults, updateResults] = await Promise.all([
-    Promise.allSettled(
-      plan.toCreate.map(async (issue) => {
-        const issueUrl = `https://github.com/${issue.repository}/issues/${issue.number}`;
-        const description = buildIssueUrlComment(issueUrl);
-        const sectionId = await getOrCreateSection(
-          todoist,
-          config.todoistProjectId,
-          issue.repository,
-        );
-        await createTask(todoist, config.todoistProjectId, {
-          content: formatTaskContent(issue),
-          description,
-          dueDate: issue.dueDate,
-          labels: [...issue.labels],
-          sectionId,
-        });
-      }),
-    ),
-    Promise.allSettled(
-      plan.toDelete.map(async (task) => {
-        await deleteTask(todoist, task.id);
-      }),
-    ),
-    Promise.allSettled(
-      plan.toComplete.map(async (task) => {
-        await completeTask(todoist, task.id);
-      }),
-    ),
-    Promise.allSettled(
-      plan.toUpdate.map(async (entry) => {
-        const { issue, task } = entry;
-        await updateTask(todoist, task.id, {
-          content: formatTaskContent(issue),
-          dueDate: issue.dueDate,
-          labels: [...issue.labels],
-        });
-      }),
-    ),
-  ]);
+  const createResults = await Promise.allSettled(
+    plan.toCreate.map(async (issue) => {
+      const issueUrl = `https://github.com/${issue.repository}/issues/${issue.number}`;
+      const description = buildIssueUrlComment(issueUrl);
+      const sectionId = await getOrCreateSection(
+        todoist,
+        config.todoistProjectId,
+        issue.repository,
+      );
+      await createTask(todoist, config.todoistProjectId, {
+        content: formatTaskContent(issue),
+        description,
+        dueDate: issue.dueDate,
+        labels: [...issue.labels],
+        sectionId,
+      });
+    }),
+  );
+
+  const deleteResults = await Promise.allSettled(
+    plan.toDelete.map(async (task) => {
+      await deleteTask(todoist, task.id);
+    }),
+  );
+
+  const completeResults = await Promise.allSettled(
+    plan.toComplete.map(async (task) => {
+      await completeTask(todoist, task.id);
+    }),
+  );
+
+  const updateResults = await Promise.allSettled(
+    plan.toUpdate.map(async (entry) => {
+      const { issue, task } = entry;
+      await updateTask(todoist, task.id, {
+        content: formatTaskContent(issue),
+        dueDate: issue.dueDate,
+        labels: [...issue.labels],
+      });
+    }),
+  );
 
   for (const res of createResults) {
     if (res.status === "fulfilled") {
