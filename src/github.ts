@@ -1,7 +1,19 @@
 import type { GetProjectItemsQuery, GetProjectItemsQueryVariables } from "./github.generated.ts";
-import type { GitHubIssue } from "./types.ts";
 import { graphql } from "@octokit/graphql";
 import { readFileSync } from "node:fs";
+
+export type GitHubIssue = {
+  readonly id: string;
+  readonly number: number;
+  readonly title: string;
+  readonly labels: readonly string[];
+  readonly state: "OPEN" | "CLOSED";
+  readonly updatedAt: string;
+  readonly createdAt: string;
+  readonly repository: string;
+  readonly projectItemId: string | null;
+  readonly dueDate: string | null;
+};
 
 type GitHubExec = <Response>(
   query: string,

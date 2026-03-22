@@ -1,4 +1,18 @@
-import type { GitHubIssue, SyncEntry, SyncPlan, TodoistTask } from "./types.ts";
+import type { GitHubIssue } from "./github.ts";
+import type { TodoistTask } from "./todoist.ts";
+
+type SyncEntry = {
+  readonly issue: GitHubIssue;
+  readonly task: TodoistTask;
+};
+
+export type SyncPlan = {
+  readonly toCreate: readonly GitHubIssue[];
+  readonly toUpdate: readonly SyncEntry[];
+  readonly toDelete: readonly TodoistTask[];
+  readonly toComplete: readonly TodoistTask[];
+  readonly toSkip: number;
+};
 
 export function extractIssueUrlFromDescription(description: string): string | null {
   const match = /<!-- github-to-todoist: (https?:\/\/[^\s]+) -->/.exec(description);

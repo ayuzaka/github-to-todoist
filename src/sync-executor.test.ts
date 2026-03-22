@@ -1,9 +1,12 @@
+import * as TodoistSdk from "@doist/todoist-api-typescript";
 import * as todoistOps from "./todoist.ts";
-import type { GitHubIssue, SyncPlan, TodoistTask } from "./types.ts";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { SyncConfig } from "./sync-executor.ts";
-import { TodoistApi } from "@doist/todoist-api-typescript";
 import { executeSyncPlan } from "./sync-executor.ts";
+
+type SyncPlan = Parameters<typeof executeSyncPlan>[0];
+type SyncConfig = Parameters<typeof executeSyncPlan>[1]["config"];
+type GitHubIssue = SyncPlan["toCreate"][number];
+type TodoistTask = SyncPlan["toDelete"][number];
 
 vi.mock(import("./todoist.ts"));
 
@@ -46,7 +49,7 @@ function makeEmptyPlan(): SyncPlan {
   };
 }
 
-const mockTodoist = new TodoistApi("mock-token");
+const mockTodoist = new TodoistSdk.TodoistApi("mock-token");
 
 describe(executeSyncPlan, () => {
   beforeEach(() => {

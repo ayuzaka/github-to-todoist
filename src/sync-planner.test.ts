@@ -1,4 +1,3 @@
-import type { GitHubIssue, SyncPlan, TodoistTask } from "./types.ts";
 import {
   buildIssueUrlComment,
   extractIssueUrlFromDescription,
@@ -6,6 +5,9 @@ import {
   planSync,
 } from "./sync-planner.ts";
 import { describe, expect, test } from "vitest";
+import type { GitHubIssue } from "./github.ts";
+import type { SyncPlan } from "./sync-planner.ts";
+import type { TodoistTask } from "./todoist.ts";
 
 const baseIssue: GitHubIssue = {
   id: "I_001",

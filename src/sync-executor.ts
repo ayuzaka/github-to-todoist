@@ -1,9 +1,9 @@
-import type { SyncPlan, SyncResult } from "./types.ts";
 import { buildIssueUrlComment, formatTaskContent } from "./sync-planner.ts";
 import { completeTask, createTask, deleteTask, getOrCreateSection, updateTask } from "./todoist.ts";
+import type { SyncPlan } from "./sync-planner.ts";
 import type { TodoistApi } from "@doist/todoist-api-typescript";
 
-export type SyncConfig = {
+type SyncConfig = {
   readonly githubProjectOwner: string;
   readonly githubProjectNumber: number;
   readonly todoistProjectId: string;
@@ -20,6 +20,14 @@ type MutableResult = {
   deleted: number;
   skipped: number;
   errors: string[];
+};
+
+type SyncResult = {
+  readonly created: number;
+  readonly updated: number;
+  readonly deleted: number;
+  readonly skipped: number;
+  readonly errors: readonly string[];
 };
 
 export async function executeSyncPlan(

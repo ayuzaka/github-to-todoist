@@ -4,7 +4,7 @@ import * as syncPlanner from "./sync-planner.ts";
 import * as syncState from "./sync-state.ts";
 import * as todoist from "./todoist.ts";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { SyncPlan } from "./types.ts";
+import type { SyncPlan } from "./sync-planner.ts";
 import { sync } from "./index.ts";
 import { validateEnv } from "./env.ts";
 
