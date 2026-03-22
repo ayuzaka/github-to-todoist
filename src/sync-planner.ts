@@ -19,6 +19,21 @@ export function extractIssueUrlFromDescription(description: string): string | nu
   return match?.[1] ?? null;
 }
 
+export function parseRepositoryFromIssueUrl(url: string): string | null {
+  const match = /^https:\/\/github\.com\/([^/]+\/[^/]+)\/issues\/\d+$/.exec(url);
+
+  return match?.[1] ?? null;
+}
+
+export function parseTaskContent(content: string): { number: number; title: string } | null {
+  const match = /^\[#(\d+)\] (.+)$/.exec(content);
+  if (match === null) {
+    return null;
+  }
+
+  return { number: Number(match[1]), title: match[2] ?? "" };
+}
+
 export function buildIssueUrlComment(issueUrl: string): string {
   return `<!-- github-to-todoist: ${issueUrl} -->`;
 }
@@ -98,4 +113,35 @@ export function planSync(
   }
 
   return { toCreate, toUpdate, toDelete, toComplete, toSkip };
+}
+
+function formatTaskLine(task: TodoistTask): string {
+  const url = extractIssueUrlFromDescription(task.description);
+  const repo = url !== null ? parseRepositoryFromIssueUrl(url) : null;
+  const parsed = parseTaskContent(task.content);
+  if (repo !== null && parsed !== null) {
+    return `${repo} #${parsed.number} ${parsed.title}`;
+  }
+  return task.content;
+}
+
+export function formatDryRunPlan(plan: SyncPlan): string {
+  const lines: string[] = [
+    `[DRY RUN] Would sync: ${plan.toCreate.length} create, ${plan.toUpdate.length} update, ${plan.toDelete.length} delete, ${plan.toComplete.length} complete, ${plan.toSkip} skipped`,
+  ];
+
+  for (const issue of plan.toCreate) {
+    lines.push(`  新規作成: ${issue.repository} #${issue.number} ${issue.title}`);
+  }
+  for (const entry of plan.toUpdate) {
+    lines.push(`  更新: ${entry.issue.repository} #${entry.issue.number} ${entry.issue.title}`);
+  }
+  for (const task of plan.toDelete) {
+    lines.push(`  削除: ${formatTaskLine(task)}`);
+  }
+  for (const task of plan.toComplete) {
+    lines.push(`  完了: ${formatTaskLine(task)}`);
+  }
+
+  return lines.join("\n") + "\n";
 }

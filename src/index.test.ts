@@ -37,6 +37,9 @@ describe(sync, () => {
     vi.mocked(github.getProjectItems).mockResolvedValue([]);
     vi.mocked(todoist.getProjectTasks).mockResolvedValue([]);
     vi.mocked(syncPlanner.planSync).mockReturnValue(emptyPlan);
+    vi.mocked(syncPlanner.formatDryRunPlan).mockReturnValue(
+      "[DRY RUN] Would sync: 0 create, 0 update, 0 delete, 0 complete, 0 skipped\n",
+    );
     vi.mocked(syncExecutor.executeSyncPlan).mockResolvedValue({
       created: 0,
       updated: 0,
@@ -66,10 +69,10 @@ describe(sync, () => {
     expect(vi.mocked(syncState.saveSyncState)).not.toHaveBeenCalled();
   });
 
-  test("--dry-run のとき [DRY RUN] プレフィックスで操作件数を出力する", async () => {
+  test("--dry-run のとき formatDryRunPlan の結果を stdout に出力する", async () => {
     // Arrange
     const writeSpy = vi.spyOn(process.stdout, "write").mockReturnValue(true);
-    vi.mocked(syncPlanner.planSync).mockReturnValue({
+    const plan: SyncPlan = {
       ...emptyPlan,
       toCreate: [
         {
@@ -86,15 +89,16 @@ describe(sync, () => {
         },
       ],
       toSkip: 3,
-    });
+    };
+    vi.mocked(syncPlanner.planSync).mockReturnValue(plan);
+    vi.mocked(syncPlanner.formatDryRunPlan).mockReturnValue("[DRY RUN] output\n");
 
     // Act
     await sync(true);
 
     // Assert
-    expect(writeSpy).toHaveBeenCalledWith(
-      "[DRY RUN] Would sync: 1 create, 0 update, 0 delete, 0 complete, 3 skipped\n",
-    );
+    expect(syncPlanner.formatDryRunPlan).toHaveBeenCalledWith(plan);
+    expect(writeSpy).toHaveBeenCalledWith("[DRY RUN] output\n");
 
     writeSpy.mockRestore();
   });

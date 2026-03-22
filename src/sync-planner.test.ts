@@ -1,7 +1,10 @@
 import {
   buildIssueUrlComment,
   extractIssueUrlFromDescription,
+  formatDryRunPlan,
   formatTaskContent,
+  parseRepositoryFromIssueUrl,
+  parseTaskContent,
   planSync,
 } from "./sync-planner.ts";
 import { describe, expect, test } from "vitest";
@@ -96,6 +99,150 @@ describe(formatTaskContent, () => {
 
     // Assert
     expect(result).toBe("[#42] Fix the bug");
+  });
+});
+
+describe(parseRepositoryFromIssueUrl, () => {
+  test("GitHub Issue URL から owner/repo を抽出する", () => {
+    // Act
+    const result = parseRepositoryFromIssueUrl("https://github.com/owner/repo/issues/1");
+
+    // Assert
+    expect(result).toBe("owner/repo");
+  });
+
+  test("無効な URL の場合 null を返す", () => {
+    // Act
+    const result = parseRepositoryFromIssueUrl("https://example.com/not-a-github-url");
+
+    // Assert
+    expect(result).toBeNull();
+  });
+
+  test("空文字列の場合 null を返す", () => {
+    // Act
+    const result = parseRepositoryFromIssueUrl("");
+
+    // Assert
+    expect(result).toBeNull();
+  });
+});
+
+describe(parseTaskContent, () => {
+  test("[#番号] タイトル 形式から番号とタイトルを抽出する", () => {
+    // Act
+    const result = parseTaskContent("[#42] Fix the bug");
+
+    // Assert
+    expect(result).toStrictEqual({ number: 42, title: "Fix the bug" });
+  });
+
+  test("フォーマットに一致しない場合 null を返す", () => {
+    // Act
+    const result = parseTaskContent("Some random content");
+
+    // Assert
+    expect(result).toBeNull();
+  });
+
+  test("空文字列の場合 null を返す", () => {
+    // Act
+    const result = parseTaskContent("");
+
+    // Assert
+    expect(result).toBeNull();
+  });
+});
+
+describe(formatDryRunPlan, () => {
+  test("新規作成の Issue 情報を表示する", () => {
+    // Arrange
+    const plan: SyncPlan = {
+      toCreate: [baseIssue],
+      toUpdate: [],
+      toDelete: [],
+      toComplete: [],
+      toSkip: 0,
+    };
+
+    // Act
+    const result = formatDryRunPlan(plan);
+
+    // Assert
+    expect(result).toContain("1 create");
+    expect(result).toContain("新規作成: owner/repo #1 Test Issue");
+  });
+
+  test("更新の Issue 情報を表示する", () => {
+    // Arrange
+    const plan: SyncPlan = {
+      toCreate: [],
+      toUpdate: [{ issue: { ...baseIssue, title: "Updated Title" }, task: baseTask }],
+      toDelete: [],
+      toComplete: [],
+      toSkip: 0,
+    };
+
+    // Act
+    const result = formatDryRunPlan(plan);
+
+    // Assert
+    expect(result).toContain("1 update");
+    expect(result).toContain("更新: owner/repo #1 Updated Title");
+  });
+
+  test("削除の TodoistTask から Issue 情報をパースして表示する", () => {
+    // Arrange
+    const plan: SyncPlan = {
+      toCreate: [],
+      toUpdate: [],
+      toDelete: [baseTask],
+      toComplete: [],
+      toSkip: 0,
+    };
+
+    // Act
+    const result = formatDryRunPlan(plan);
+
+    // Assert
+    expect(result).toContain("1 delete");
+    expect(result).toContain("削除: owner/repo #1 Test Issue");
+  });
+
+  test("完了の TodoistTask から Issue 情報をパースして表示する", () => {
+    // Arrange
+    const plan: SyncPlan = {
+      toCreate: [],
+      toUpdate: [],
+      toDelete: [],
+      toComplete: [baseTask],
+      toSkip: 0,
+    };
+
+    // Act
+    const result = formatDryRunPlan(plan);
+
+    // Assert
+    expect(result).toContain("1 complete");
+    expect(result).toContain("完了: owner/repo #1 Test Issue");
+  });
+
+  test("パース不能な TodoistTask は content をそのまま表示する", () => {
+    // Arrange
+    const task: TodoistTask = { ...baseTask, content: "Manual task", description: "" };
+    const plan: SyncPlan = {
+      toCreate: [],
+      toUpdate: [],
+      toDelete: [task],
+      toComplete: [],
+      toSkip: 0,
+    };
+
+    // Act
+    const result = formatDryRunPlan(plan);
+
+    // Assert
+    expect(result).toContain("削除: Manual task");
   });
 });
 

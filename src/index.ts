@@ -1,9 +1,9 @@
 import { createGitHubExec, getProjectItems } from "./github.ts";
+import { formatDryRunPlan, planSync } from "./sync-planner.ts";
 import { getSyncStateFilePath, loadSyncState, saveSyncState } from "./sync-state.ts";
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import { executeSyncPlan } from "./sync-executor.ts";
 import { getProjectTasks } from "./todoist.ts";
-import { planSync } from "./sync-planner.ts";
 import { validateEnv } from "./env.ts";
 
 export async function sync(dryRun = false): Promise<void> {
@@ -23,9 +23,7 @@ export async function sync(dryRun = false): Promise<void> {
   const plan = planSync(issues, tasks, lastSyncedAt);
 
   if (dryRun) {
-    process.stdout.write(
-      `[DRY RUN] Would sync: ${plan.toCreate.length} create, ${plan.toUpdate.length} update, ${plan.toDelete.length} delete, ${plan.toComplete.length} complete, ${plan.toSkip} skipped\n`,
-    );
+    process.stdout.write(formatDryRunPlan(plan));
     return;
   }
 
