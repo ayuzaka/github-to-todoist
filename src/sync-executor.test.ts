@@ -53,6 +53,7 @@ const mockTodoist = new TodoistSdk.TodoistApi("mock-token");
 
 describe(executeSyncPlan, () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(todoistOps.getOrCreateSection).mockResolvedValue("section_001");
     vi.mocked(todoistOps.createTask).mockResolvedValue(baseTask);
     vi.mocked(todoistOps.updateTask).mockResolvedValue();
@@ -133,6 +134,78 @@ describe(executeSyncPlan, () => {
     // Assert
     expect(result.errors).toHaveLength(1);
     expect(result.created).toBe(0);
+  });
+
+  test("同一リポジトリの Issue が複数あってもセクションは1回だけ作成される", async () => {
+    // Arrange
+    const issue1: GitHubIssue = { ...baseIssue, id: "I_001", number: 1 };
+    const issue2: GitHubIssue = { ...baseIssue, id: "I_002", number: 2 };
+    const issue3: GitHubIssue = { ...baseIssue, id: "I_003", number: 3 };
+    const plan: SyncPlan = { ...makeEmptyPlan(), toCreate: [issue1, issue2, issue3] };
+
+    // Act
+    await executeSyncPlan(plan, { todoist: mockTodoist, config });
+
+    // Assert
+    expect(vi.mocked(todoistOps.getOrCreateSection)).toHaveBeenCalledOnce();
+  });
+
+  test("異なるリポジトリの Issue はリポジトリごとにセクションを作成する", async () => {
+    // Arrange
+    vi.mocked(todoistOps.getOrCreateSection)
+      .mockResolvedValueOnce("section_repo_a")
+      .mockResolvedValueOnce("section_repo_b");
+    const issueA: GitHubIssue = {
+      ...baseIssue,
+      id: "I_001",
+      number: 1,
+      repository: "owner/repo-a",
+    };
+    const issueB: GitHubIssue = {
+      ...baseIssue,
+      id: "I_002",
+      number: 2,
+      repository: "owner/repo-b",
+    };
+    const plan: SyncPlan = { ...makeEmptyPlan(), toCreate: [issueA, issueB] };
+
+    // Act
+    await executeSyncPlan(plan, { todoist: mockTodoist, config });
+
+    // Assert
+    expect(vi.mocked(todoistOps.getOrCreateSection)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(todoistOps.createTask)).toHaveBeenCalledWith(
+      mockTodoist,
+      config.todoistProjectId,
+      expect.objectContaining({ sectionId: "section_repo_a" }),
+    );
+    expect(vi.mocked(todoistOps.createTask)).toHaveBeenCalledWith(
+      mockTodoist,
+      config.todoistProjectId,
+      expect.objectContaining({ sectionId: "section_repo_b" }),
+    );
+  });
+
+  test("セクション作成失敗時は該当リポジトリの全 Issue がエラーになり他の操作は続行される", async () => {
+    // Arrange
+    vi.mocked(todoistOps.getOrCreateSection).mockRejectedValue(new Error("Section API error"));
+    const issue1: GitHubIssue = { ...baseIssue, id: "I_001", number: 1 };
+    const issue2: GitHubIssue = { ...baseIssue, id: "I_002", number: 2 };
+    const plan: SyncPlan = {
+      ...makeEmptyPlan(),
+      toCreate: [issue1, issue2],
+      toDelete: [{ ...baseTask, id: "task_del" }],
+    };
+
+    // Act
+    const result = await executeSyncPlan(plan, { todoist: mockTodoist, config });
+
+    // Assert
+    expect(result.errors).toHaveLength(2);
+    expect(result.errors.every((e) => e.includes("Section API error"))).toBeTruthy();
+    expect(vi.mocked(todoistOps.createTask)).not.toHaveBeenCalled();
+    expect(vi.mocked(todoistOps.deleteTask)).toHaveBeenCalledWith(mockTodoist, "task_del");
+    expect(result.deleted).toBe(1);
   });
 
   test("toSkip は result.skipped に反映される", async () => {

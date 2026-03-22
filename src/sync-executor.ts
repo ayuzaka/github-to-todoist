@@ -43,15 +43,38 @@ export async function executeSyncPlan(
     errors: [],
   };
 
+  const uniqueRepositories = [...new Set(plan.toCreate.map((issue) => issue.repository))];
+  const sectionResults = await Promise.allSettled(
+    uniqueRepositories.map(async (repository) =>
+      getOrCreateSection(todoist, config.todoistProjectId, repository),
+    ),
+  );
+  const sectionMap = new Map<string, string>();
+  for (const [idx, result] of sectionResults.entries()) {
+    const repository = uniqueRepositories[idx];
+    if (repository === undefined) {
+      continue;
+    }
+
+    if (result.status === "fulfilled") {
+      sectionMap.set(repository, result.value);
+    } else {
+      const affectedCount = plan.toCreate.filter((i) => i.repository === repository).length;
+      for (let j = 0; j < affectedCount; j++) {
+        r.errors.push(String(result.reason));
+      }
+    }
+  }
+
   const createResults = await Promise.allSettled(
     plan.toCreate.map(async (issue) => {
+      const sectionId = sectionMap.get(issue.repository);
+      if (sectionId === undefined) {
+        return false;
+      }
+
       const issueUrl = `https://github.com/${issue.repository}/issues/${issue.number}`;
       const description = buildIssueUrlComment(issueUrl);
-      const sectionId = await getOrCreateSection(
-        todoist,
-        config.todoistProjectId,
-        issue.repository,
-      );
       await createTask(todoist, config.todoistProjectId, {
         content: formatTaskContent(issue),
         description,
@@ -59,6 +82,8 @@ export async function executeSyncPlan(
         labels: [...issue.labels],
         sectionId,
       });
+
+      return true;
     }),
   );
 
@@ -87,7 +112,9 @@ export async function executeSyncPlan(
 
   for (const res of createResults) {
     if (res.status === "fulfilled") {
-      r.created++;
+      if (res.value) {
+        r.created++;
+      }
     } else {
       r.errors.push(String(res.reason));
     }

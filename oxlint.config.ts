@@ -270,7 +270,7 @@ export default defineConfig({
         "vitest/consistent-vitest-vi": "error",
         "vitest/no-import-node-test": "error",
         "vitest/prefer-called-once": "error",
-        "vitest/prefer-called-times": "error",
+        "vitest/prefer-called-times": "off",
         "vitest/prefer-called-with": "error",
         "vitest/prefer-describe-function-title": "error",
         "vitest/prefer-expect-type-of": "error",
