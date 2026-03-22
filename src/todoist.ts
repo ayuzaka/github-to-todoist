@@ -6,11 +6,13 @@ type CreateTaskParams = {
   readonly description: string;
   readonly dueDate: string | null;
   readonly labels: readonly string[];
+  readonly sectionId: string;
 };
 
 type UpdateTaskParams = {
   readonly content: string;
   readonly dueDate: string | null;
+  readonly labels: readonly string[];
 };
 
 export function mapTodoistTask(task: Task): TodoistTask {
@@ -44,19 +46,28 @@ async function fetchAllTasks(params: FetchAllTasksParams): Promise<readonly Todo
   return fetchAllTasks({ api, projectId, cursor: response.nextCursor, accumulated: allTasks });
 }
 
-async function fetchAllLabelNames(
-  api: TodoistApi,
-  cursor: string | null,
-  accumulated: readonly string[],
-): Promise<readonly string[]> {
-  const response = await api.getLabels({ cursor });
-  const allLabelsName = [...accumulated, ...response.results.map((label) => label.name)];
+type SectionEntry = {
+  readonly id: string;
+  readonly name: string;
+};
+
+type FetchAllSectionsParams = {
+  readonly api: TodoistApi;
+  readonly projectId: string;
+  readonly cursor: string | null;
+  readonly accumulated: readonly SectionEntry[];
+};
+
+async function fetchAllSections(params: FetchAllSectionsParams): Promise<readonly SectionEntry[]> {
+  const { api, projectId, cursor, accumulated } = params;
+  const response = await api.getSections({ projectId, cursor });
+  const all = [...accumulated, ...response.results.map((s) => ({ id: s.id, name: s.name }))];
 
   if (response.nextCursor === null) {
-    return allLabelsName;
+    return all;
   }
 
-  return fetchAllLabelNames(api, response.nextCursor, allLabelsName);
+  return fetchAllSections({ api, projectId, cursor: response.nextCursor, accumulated: all });
 }
 
 export async function getProjectTasks(
@@ -88,8 +99,8 @@ export async function createTask(
   projectId: string,
   params: CreateTaskParams,
 ): Promise<TodoistTask> {
-  const { content, description, dueDate, labels } = params;
-  const base = { content, description, projectId, labels: [...labels] };
+  const { content, description, dueDate, labels, sectionId } = params;
+  const base = { content, description, projectId, labels: [...labels], sectionId };
 
   if (dueDate !== null) {
     return mapTodoistTask(await api.addTask({ ...base, dueDate }));
@@ -103,13 +114,13 @@ export async function updateTask(
   taskId: string,
   params: UpdateTaskParams,
 ): Promise<void> {
-  const { content, dueDate } = params;
+  const { content, dueDate, labels } = params;
   if (dueDate === null) {
-    await api.updateTask(taskId, { content, dueString: null });
+    await api.updateTask(taskId, { content, dueString: null, labels: [...labels] });
     return;
   }
 
-  await api.updateTask(taskId, { content, dueDate });
+  await api.updateTask(taskId, { content, dueDate, labels: [...labels] });
 }
 
 export async function completeTask(api: TodoistApi, taskId: string): Promise<void> {
@@ -120,24 +131,18 @@ export async function deleteTask(api: TodoistApi, taskId: string): Promise<void>
   await api.deleteTask(taskId);
 }
 
-export async function getOrCreateLabel(api: TodoistApi, name: string): Promise<string> {
-  const names = await fetchAllLabelNames(api, null, []);
-  if (names.includes(name)) {
-    return name;
-  }
-
-  await api.addLabel({ name });
-
-  return name;
-}
-
-export async function addLabelToTask(
+export async function getOrCreateSection(
   api: TodoistApi,
-  taskId: string,
-  labelName: string,
-): Promise<void> {
-  const task = await api.getTask(taskId);
-  if (!task.labels.includes(labelName)) {
-    await api.updateTask(taskId, { labels: [...task.labels, labelName] });
+  projectId: string,
+  name: string,
+): Promise<string> {
+  const sections = await fetchAllSections({ api, projectId, cursor: null, accumulated: [] });
+  const existing = sections.find((s) => s.name === name);
+  if (existing !== undefined) {
+    return existing.id;
   }
+
+  const section = await api.addSection({ name, projectId });
+
+  return section.id;
 }

@@ -9,8 +9,12 @@ export function buildIssueUrlComment(issueUrl: string): string {
   return `<!-- github-to-todoist: ${issueUrl} -->`;
 }
 
+export function formatTaskContent(issue: GitHubIssue): string {
+  return `[#${issue.number}] ${issue.title}`;
+}
+
 function hasContentDiff(issue: GitHubIssue, task: TodoistTask): boolean {
-  return issue.title !== task.content || issue.dueDate !== task.dueDate;
+  return formatTaskContent(issue) !== task.content || issue.dueDate !== task.dueDate;
 }
 
 export function planSync(

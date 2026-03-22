@@ -1,14 +1,7 @@
 import type { SyncPlan, SyncResult } from "./types.ts";
-import {
-  addLabelToTask,
-  completeTask,
-  createTask,
-  deleteTask,
-  getOrCreateLabel,
-  updateTask,
-} from "./todoist.ts";
+import { buildIssueUrlComment, formatTaskContent } from "./sync-planner.ts";
+import { completeTask, createTask, deleteTask, getOrCreateSection, updateTask } from "./todoist.ts";
 import type { TodoistApi } from "@doist/todoist-api-typescript";
-import { buildIssueUrlComment } from "./sync-planner.ts";
 
 export type SyncConfig = {
   readonly githubProjectOwner: string;
@@ -47,14 +40,18 @@ export async function executeSyncPlan(
       plan.toCreate.map(async (issue) => {
         const issueUrl = `https://github.com/${issue.repository}/issues/${issue.number}`;
         const description = buildIssueUrlComment(issueUrl);
-        const labelName = await getOrCreateLabel(todoist, issue.repository);
-        const task = await createTask(todoist, config.todoistProjectId, {
-          content: issue.title,
+        const sectionId = await getOrCreateSection(
+          todoist,
+          config.todoistProjectId,
+          issue.repository,
+        );
+        await createTask(todoist, config.todoistProjectId, {
+          content: formatTaskContent(issue),
           description,
           dueDate: issue.dueDate,
-          labels: [labelName],
+          labels: [...issue.labels],
+          sectionId,
         });
-        await addLabelToTask(todoist, task.id, labelName);
       }),
     ),
     Promise.allSettled(
@@ -71,8 +68,9 @@ export async function executeSyncPlan(
       plan.toUpdate.map(async (entry) => {
         const { issue, task } = entry;
         await updateTask(todoist, task.id, {
-          content: issue.title,
+          content: formatTaskContent(issue),
           dueDate: issue.dueDate,
+          labels: [...issue.labels],
         });
       }),
     ),

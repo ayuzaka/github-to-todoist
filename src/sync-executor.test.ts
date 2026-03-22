@@ -50,9 +50,8 @@ const mockTodoist = new TodoistApi("mock-token");
 
 describe(executeSyncPlan, () => {
   beforeEach(() => {
-    vi.mocked(todoistOps.getOrCreateLabel).mockResolvedValue("owner/repo");
+    vi.mocked(todoistOps.getOrCreateSection).mockResolvedValue("section_001");
     vi.mocked(todoistOps.createTask).mockResolvedValue(baseTask);
-    vi.mocked(todoistOps.addLabelToTask).mockResolvedValue();
     vi.mocked(todoistOps.updateTask).mockResolvedValue();
     vi.mocked(todoistOps.completeTask).mockResolvedValue();
     vi.mocked(todoistOps.deleteTask).mockResolvedValue();

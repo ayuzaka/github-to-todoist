@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getTask, mapTodoistTask } from "./todoist.ts";
+import { getOrCreateSection, getTask, mapTodoistTask } from "./todoist.ts";
 import { TodoistApi } from "@doist/todoist-api-typescript";
 import type { TodoistTask } from "./types.ts";
 
@@ -131,5 +131,69 @@ describe(mapTodoistTask, () => {
 
     // Assert
     expect(result.labels).toStrictEqual(["backend", "urgent"]);
+  });
+});
+
+describe(getOrCreateSection, () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const baseSection = {
+    id: "sec_001",
+    name: "owner/repo",
+    projectId: "proj_001",
+    sectionOrder: 1,
+    url: "",
+    userId: "user_1",
+    addedAt: "2026-03-01T00:00:00Z",
+    updatedAt: "2026-03-01T00:00:00Z",
+    archivedAt: null,
+    isArchived: false,
+    isDeleted: false,
+    isCollapsed: false,
+  };
+
+  test("既存のセクションがある場合はその ID を返す", async () => {
+    // Arrange
+    vi.spyOn(TodoistApi.prototype, "getSections").mockResolvedValue({
+      results: [baseSection],
+      nextCursor: null,
+    });
+    const addSectionSpy = vi
+      .spyOn(TodoistApi.prototype, "addSection")
+      .mockResolvedValue(baseSection);
+    const api = new TodoistApi("token");
+
+    // Act
+    const result = await getOrCreateSection(api, "proj_001", "owner/repo");
+
+    // Assert
+    expect(result).toBe("sec_001");
+    expect(addSectionSpy).not.toHaveBeenCalled();
+  });
+
+  test("セクションが存在しない場合は作成してその ID を返す", async () => {
+    // Arrange
+    vi.spyOn(TodoistApi.prototype, "getSections").mockResolvedValue({
+      results: [],
+      nextCursor: null,
+    });
+    const addSectionSpy = vi.spyOn(TodoistApi.prototype, "addSection").mockResolvedValue({
+      ...baseSection,
+      id: "sec_new",
+      name: "owner/new-repo",
+    });
+    const api = new TodoistApi("token");
+
+    // Act
+    const result = await getOrCreateSection(api, "proj_001", "owner/new-repo");
+
+    // Assert
+    expect(result).toBe("sec_new");
+    expect(addSectionSpy).toHaveBeenCalledWith({
+      name: "owner/new-repo",
+      projectId: "proj_001",
+    });
   });
 });

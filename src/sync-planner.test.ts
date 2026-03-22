@@ -1,5 +1,10 @@
 import type { GitHubIssue, SyncPlan, TodoistTask } from "./types.ts";
-import { buildIssueUrlComment, extractIssueUrlFromDescription, planSync } from "./sync-planner.ts";
+import {
+  buildIssueUrlComment,
+  extractIssueUrlFromDescription,
+  formatTaskContent,
+  planSync,
+} from "./sync-planner.ts";
 import { describe, expect, test } from "vitest";
 
 const baseIssue: GitHubIssue = {
@@ -76,6 +81,19 @@ describe(buildIssueUrlComment, () => {
 
     // Assert
     expect(result).toBe("<!-- github-to-todoist: https://github.com/owner/repo/issues/1 -->");
+  });
+});
+
+describe(formatTaskContent, () => {
+  test("Issue 番号とタイトルを [#番号] タイトル 形式でフォーマットする", () => {
+    // Arrange
+    const issue: GitHubIssue = { ...baseIssue, number: 42, title: "Fix the bug" };
+
+    // Act
+    const result = formatTaskContent(issue);
+
+    // Assert
+    expect(result).toBe("[#42] Fix the bug");
   });
 });
 
