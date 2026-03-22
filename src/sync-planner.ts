@@ -133,12 +133,15 @@ export function formatDryRunPlan(plan: SyncPlan): string {
   for (const issue of plan.toCreate) {
     lines.push(`  新規作成: ${issue.repository} #${issue.number} ${issue.title}`);
   }
+
   for (const entry of plan.toUpdate) {
     lines.push(`  更新: ${entry.issue.repository} #${entry.issue.number} ${entry.issue.title}`);
   }
+
   for (const task of plan.toDelete) {
     lines.push(`  削除: ${formatTaskLine(task)}`);
   }
+
   for (const task of plan.toComplete) {
     lines.push(`  完了: ${formatTaskLine(task)}`);
   }
