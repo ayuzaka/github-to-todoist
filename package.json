@@ -1,0 +1,51 @@
+{
+  "name": "sync-todoist-github",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "prek install",
+    "codegen": "graphql-codegen --config codegen.ts",
+    "dev": "node --watch src/index.ts",
+    "build": "tsdown",
+    "lint": "oxlint --config ./oxlint.config.ts",
+    "lint:fix": "oxlint --config ./oxlint.config.ts --fix",
+    "format": "oxfmt --check",
+    "format:fix": "oxfmt",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "knip": "knip --fix-type exports --fix-type types",
+    "knip:fix": "knip --fix --fix-type exports --fix-type types"
+  },
+  "dependencies": {
+    "@doist/todoist-api-typescript": "^7.1.1",
+    "@octokit/graphql": "^9.0.3"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^6.2.1",
+    "@graphql-codegen/typescript": "^5.0.9",
+    "@graphql-codegen/typescript-operations": "^5.0.9",
+    "@j178/prek": "^0.3.5",
+    "@octokit/graphql-schema": "^15.26.1",
+    "@types/node": "^25.5.0",
+    "graphql": "^16.13.1",
+    "knip": "^5.86.0",
+    "oxfmt": "^0.40.0",
+    "oxlint": "^1.55.0",
+    "oxlint-tsgolint": "^0.16.0",
+    "tsdown": "^0.21.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  },
+  "engines": {
+    "runtime": [
+      {
+        "name": "node",
+        "version": "24.13.1",
+        "onFail": "download"
+      }
+    ]
+  },
+  "packageManager": "pnpm@10.32.1"
+}

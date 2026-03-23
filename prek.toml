@@ -1,0 +1,27 @@
+orphan = true
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "format"
+name = "Format"
+language = "system"
+entry = "pnpm run format:fix"
+files = "\\.ts$"
+pass_filenames = true
+
+[[repos.hooks]]
+id = "lint"
+name = "Lint"
+language = "system"
+entry = "pnpm run lint:fix"
+files = "\\.ts$"
+pass_filenames = true
+
+[[repos.hooks]]
+id = "typecheck"
+name = "TypeCheck"
+language = "system"
+entry = "pnpm run typecheck"
+pass_filenames = false
