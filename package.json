@@ -16,7 +16,9 @@
     "test": "vitest run",
     "test:watch": "vitest watch",
     "knip": "knip --fix-type exports --fix-type types",
-    "knip:fix": "knip --fix --fix-type exports --fix-type types"
+    "knip:fix": "knip --fix --fix-type exports --fix-type types",
+    "sync": "node --env-file=.env ./dist/index.js",
+    "sync:loop": "node --env-file=.env ./src/sync-loop.ts 720"
   },
   "dependencies": {
     "@doist/todoist-api-typescript": "^7.1.1",
