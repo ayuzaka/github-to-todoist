@@ -85,7 +85,7 @@ pnpm dev
 1. **取得フェーズ**: GitHub Project の Issue 一覧と Todoist タスク一覧を並列取得
 2. **比較フェーズ**: Todoist タスクの description に埋め込まれた GitHub Issue URL をキーにマッピングし、各ペアの同期要否を判定
 3. **書き込みフェーズ**: 作成・更新・完了・削除を並列実行
-4. **状態保存フェーズ**: 最終同期時刻を `sync-state.json` に保存し、次回実行時の差分同期に使用
+4. **状態保存フェーズ**: 最終同期時刻を `sync-state.json` に保存し、次回実行時は Issue 本体または同期対象の GitHub Projects フィールド更新との差分同期に使用
 
 ## 開発
 

@@ -9,6 +9,7 @@ export type GitHubIssue = {
   readonly labels: readonly string[];
   readonly state: "OPEN" | "CLOSED";
   readonly updatedAt: string;
+  readonly syncUpdatedAt: string;
   readonly createdAt: string;
   readonly repository: string;
   readonly projectItemId: string | null;
@@ -41,6 +42,15 @@ function isIssueContent(content: ProjectItemNode["content"]): content is IssueCo
   return content?.__typename === "Issue";
 }
 
+function getSyncUpdatedAt(node: ProjectItemNode, issueUpdatedAt: string): string {
+  if (node.dateField?.__typename !== "ProjectV2ItemFieldDateValue") {
+    return issueUpdatedAt;
+  }
+
+  const dateFieldUpdatedAt = node.dateField.updatedAt;
+  return dateFieldUpdatedAt > issueUpdatedAt ? dateFieldUpdatedAt : issueUpdatedAt;
+}
+
 export function mapProjectItem(node: ProjectItemNode): GitHubIssue | null {
   const { content } = node;
 
@@ -59,6 +69,7 @@ export function mapProjectItem(node: ProjectItemNode): GitHubIssue | null {
       .map((label) => label.name),
     state: content.state === "OPEN" ? "OPEN" : "CLOSED",
     updatedAt: content.updatedAt,
+    syncUpdatedAt: getSyncUpdatedAt(node, content.updatedAt),
     createdAt: content.createdAt,
     repository: content.repository.nameWithOwner,
     projectItemId: node.id,

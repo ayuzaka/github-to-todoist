@@ -27,6 +27,7 @@ describe(mapProjectItem, () => {
       dateField: {
         __typename: "ProjectV2ItemFieldDateValue",
         date: "2026-04-01",
+        updatedAt: "2026-03-15T00:00:00Z",
       },
     };
 
@@ -41,6 +42,7 @@ describe(mapProjectItem, () => {
       labels: ["backend", "urgent"],
       state: "OPEN",
       updatedAt: "2026-03-13T00:00:00Z",
+      syncUpdatedAt: "2026-03-15T00:00:00Z",
       createdAt: "2026-03-01T00:00:00Z",
       repository: "owner/repo",
       projectItemId: "PROJECT_ID_1",
@@ -106,6 +108,7 @@ describe(mapProjectItem, () => {
 
     // Assert
     expect(result?.dueDate).toBeNull();
+    expect(result?.syncUpdatedAt).toBe("2026-03-13T00:00:00Z");
   });
 
   test("Date 以外のフィールド値型の場合 dueDate は null", () => {
@@ -121,6 +124,25 @@ describe(mapProjectItem, () => {
 
     // Assert
     expect(result?.dueDate).toBeNull();
+  });
+
+  test("Date フィールドの updatedAt が古い場合は Issue.updatedAt を優先する", () => {
+    // Arrange
+    const node: ProjectItemNode = {
+      id: "PJT_old_date",
+      content: baseIssueContent,
+      dateField: {
+        __typename: "ProjectV2ItemFieldDateValue",
+        date: "2026-04-01",
+        updatedAt: "2026-03-10T00:00:00Z",
+      },
+    };
+
+    // Act
+    const result = mapProjectItem(node);
+
+    // Assert
+    expect(result?.syncUpdatedAt).toBe("2026-03-13T00:00:00Z");
   });
 });
 
@@ -189,5 +211,7 @@ describe(getProjectItems, () => {
     expect(query).toContain("content {");
     expect(query).toContain("__typename");
     expect(query).toContain("labels(first: 100)");
+    expect(query).toContain('dateField: fieldValueByName(name: "Date")');
+    expect(query).toContain("updatedAt");
   });
 });

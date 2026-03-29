@@ -19,6 +19,7 @@ const baseIssue: GitHubIssue = {
   labels: ["backend"],
   state: "OPEN",
   updatedAt: "2026-03-13T00:00:00Z",
+  syncUpdatedAt: "2026-03-13T00:00:00Z",
   createdAt: "2026-03-01T00:00:00Z",
   repository: "owner/repo",
   projectItemId: "Project_001",
@@ -386,7 +387,11 @@ describe(planSync, () => {
 
   test("lastSyncedAt 以前に更新された Issue はスキップされる", () => {
     // Arrange
-    const oldIssue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" };
+    const oldIssue: GitHubIssue = {
+      ...baseIssue,
+      updatedAt: "2026-03-10T00:00:00Z",
+      syncUpdatedAt: "2026-03-10T00:00:00Z",
+    };
     const issues: readonly GitHubIssue[] = [oldIssue];
     const tasks: readonly TodoistTask[] = [baseTask];
     const lastSyncedAt = "2026-03-15T00:00:00Z";
@@ -406,6 +411,7 @@ describe(planSync, () => {
       ...baseIssue,
       title: "Updated Title",
       updatedAt: "2026-03-20T00:00:00Z",
+      syncUpdatedAt: "2026-03-20T00:00:00Z",
     };
     const issues: readonly GitHubIssue[] = [newIssue];
     const tasks: readonly TodoistTask[] = [baseTask];
@@ -421,7 +427,11 @@ describe(planSync, () => {
 
   test("lastSyncedAt でフィルタされた Issue に対応するタスクは孤立タスクとして誤削除されない", () => {
     // Arrange
-    const oldIssue: GitHubIssue = { ...baseIssue, updatedAt: "2026-03-10T00:00:00Z" };
+    const oldIssue: GitHubIssue = {
+      ...baseIssue,
+      updatedAt: "2026-03-10T00:00:00Z",
+      syncUpdatedAt: "2026-03-10T00:00:00Z",
+    };
     const issues: readonly GitHubIssue[] = [oldIssue];
     const tasks: readonly TodoistTask[] = [baseTask];
     const lastSyncedAt = "2026-03-15T00:00:00Z";
@@ -431,5 +441,24 @@ describe(planSync, () => {
 
     // Assert
     expect(result.toDelete).toStrictEqual([]);
+  });
+
+  test("Issue.updatedAt が古くても Date フィールド更新が新しければ同期対象になる", () => {
+    // Arrange
+    const issue: GitHubIssue = {
+      ...baseIssue,
+      updatedAt: "2026-03-10T00:00:00Z",
+      syncUpdatedAt: "2026-03-20T00:00:00Z",
+      dueDate: "2026-03-20",
+    };
+    const task: TodoistTask = { ...baseTask, dueDate: null };
+    const lastSyncedAt = "2026-03-15T00:00:00Z";
+
+    // Act
+    const result = planSync([issue], [task], lastSyncedAt);
+
+    // Assert
+    expect(result.toUpdate).toStrictEqual([{ issue, task }]);
+    expect(result.toSkip).toBe(0);
   });
 });
