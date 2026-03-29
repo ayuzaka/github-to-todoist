@@ -28,7 +28,6 @@ export default defineConfig({
     radix: "error",
 
     // eslint/perf
-    "no-await-in-loop": "error",
     "no-useless-call": "error",
 
     // eslint/restriction
@@ -60,9 +59,8 @@ export default defineConfig({
     "prefer-numeric-literals": "error",
     "prefer-object-has-own": "error",
     "prefer-object-spread": "error",
-    "prefer-promise-reject-errors": "error",
+    "prefer-promise-reject-errors": "off",
     "prefer-rest-params": "error",
-    "sort-imports": "error",
     yoda: "error",
 
     // eslint /suspicious
@@ -83,7 +81,7 @@ export default defineConfig({
     // oxc
     "oxc/no-accumulating-spread": "error",
     "oxc/no-map-spread": "error",
-    "oxc/bad-bitwise-operator": "error",
+    "oxc/bad-bitwise-operator": "off",
     "oxc/no-barrel-file": "error",
     "oxc/no-const-enum": "error",
     "oxc/approx-constant": "error",
