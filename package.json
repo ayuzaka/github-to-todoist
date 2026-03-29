@@ -17,7 +17,8 @@
     "test:watch": "vitest watch",
     "knip": "knip --fix-type exports --fix-type types",
     "knip:fix": "knip --fix --fix-type exports --fix-type types",
-    "sync": "node --env-file=.env ./dist/index.js",
+    "sync": "node --env-file=.env ./dist/index.mjs",
+    "sync:dryrun": "node --env-file=.env ./dist/index.mjs --dry-run",
     "sync:loop": "node --env-file=.env ./src/sync-loop.ts 720"
   },
   "dependencies": {
