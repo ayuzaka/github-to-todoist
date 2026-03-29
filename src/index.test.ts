@@ -82,6 +82,7 @@ describe(sync, () => {
           labels: [],
           state: "OPEN",
           updatedAt: "2026-03-01T00:00:00Z",
+          syncUpdatedAt: "2026-03-01T00:00:00Z",
           createdAt: "2026-03-01T00:00:00Z",
           repository: "owner/repo",
           projectItemId: "PI_001",

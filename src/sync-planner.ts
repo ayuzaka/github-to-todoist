@@ -75,7 +75,7 @@ export function planSync(
       handledTaskIds.add(task.id);
     }
 
-    if (lastSyncedAt !== null && issue.updatedAt <= lastSyncedAt) {
+    if (lastSyncedAt !== null && issue.syncUpdatedAt <= lastSyncedAt) {
       toSkip++;
       continue;
     }

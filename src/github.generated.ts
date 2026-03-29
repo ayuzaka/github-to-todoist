@@ -32409,7 +32409,7 @@ export type GetProjectItemsQuery = { __typename?: 'Query', repositoryOwner?:
               | { __typename: 'Issue', id: string, number: number, title: string, state: IssueState, updatedAt: any, createdAt: any, labels?: { __typename?: 'LabelConnection', nodes?: Array<{ __typename?: 'Label', name: string } | null> | null } | null, repository: { __typename?: 'Repository', nameWithOwner: string } }
               | { __typename: 'PullRequest' }
              | null, dateField?:
-              | { __typename: 'ProjectV2ItemFieldDateValue', date?: any | null }
+              | { __typename: 'ProjectV2ItemFieldDateValue', date?: any | null, updatedAt: any }
               | { __typename: 'ProjectV2ItemFieldIterationValue' }
               | { __typename: 'ProjectV2ItemFieldLabelValue' }
               | { __typename: 'ProjectV2ItemFieldMilestoneValue' }
@@ -32426,7 +32426,7 @@ export type GetProjectItemsQuery = { __typename?: 'Query', repositoryOwner?:
               | { __typename: 'Issue', id: string, number: number, title: string, state: IssueState, updatedAt: any, createdAt: any, labels?: { __typename?: 'LabelConnection', nodes?: Array<{ __typename?: 'Label', name: string } | null> | null } | null, repository: { __typename?: 'Repository', nameWithOwner: string } }
               | { __typename: 'PullRequest' }
              | null, dateField?:
-              | { __typename: 'ProjectV2ItemFieldDateValue', date?: any | null }
+              | { __typename: 'ProjectV2ItemFieldDateValue', date?: any | null, updatedAt: any }
               | { __typename: 'ProjectV2ItemFieldIterationValue' }
               | { __typename: 'ProjectV2ItemFieldLabelValue' }
               | { __typename: 'ProjectV2ItemFieldMilestoneValue' }

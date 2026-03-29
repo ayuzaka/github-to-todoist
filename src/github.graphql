@@ -34,6 +34,7 @@ query GetProjectItems($owner: String!, $projectNumber: Int!, $cursor: String) {
               __typename
               ... on ProjectV2ItemFieldDateValue {
                 date
+                updatedAt
               }
             }
           }
@@ -73,6 +74,7 @@ query GetProjectItems($owner: String!, $projectNumber: Int!, $cursor: String) {
               __typename
               ... on ProjectV2ItemFieldDateValue {
                 date
+                updatedAt
               }
             }
           }
